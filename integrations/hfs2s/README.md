@@ -38,6 +38,6 @@ The workspace exposes `POST /api/photobooth/send`, `GET /api/photobooth/status?i
 
 The host additionally exposes authenticated Iris outbox and acknowledgement routes. All requests require the selected app's credential; public callers reach them through the workspace adapter.
 
-APIMart uses `gpt-image-2` with one PNG reference and `n: 1`, `size: "3:4"`, `resolution: "1k"`. New references are resized to 1024×768; 1280×960 remains accepted for existing sessions. Result hosts are limited to `upload.apimart.ai` and `getapib.org`, the latter observed in authenticated provider results. Unknown image hosts fail visibly rather than allowing arbitrary fetches. Retrieving a completed image does not submit another generation.
+APIMart uses `gpt-image-2` with three PNG references in capture order and `n: 1`, `size: "1:2"`, `resolution: "1k"`. New references are resized to 1024×768, 768×576 or 640×480 to keep the combined upload within 7 MB. Legacy single-reference clients remain accepted for active sessions. A nonempty guest description is the sole style direction; preset text is used only when the description is blank. Result hosts are limited to `upload.apimart.ai` and `getapib.org`, the latter observed in authenticated provider results. Unknown image hosts fail visibly rather than allowing arbitrary fetches. Retrieving a completed image does not submit another generation.
 
 The Iris poller triggers expiry cleanup every five seconds. Deploy an equivalent scheduled cleanup calling both services' `cleanup()` functions if running without Iris.

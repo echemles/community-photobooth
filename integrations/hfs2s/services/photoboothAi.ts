@@ -13,10 +13,25 @@ function validSource(value: string) {
   const b = Buffer.from(value, 'base64');
   return b.length >= 45 && b.length <= 5 * 1024 * 1024 && b.toString('base64') === value
     && b.subarray(0, 8).toString('hex') === '89504e470d0a1a0a' && b.toString('ascii', 12, 16) === 'IHDR'
-    && [[1280,960], [1024,768]].some(([w,h]) => b.readUInt32BE(16) === w && b.readUInt32BE(20) === h)
+    && [[1280,960], [1024,768], [768,576], [640,480]].some(([w,h]) => b.readUInt32BE(16) === w && b.readUInt32BE(20) === h)
     && b.subarray(-12).toString('hex') === '0000000049454e44ae426082';
 }
-export const startSchema = z.object({ id: z.string().uuid(), style: z.enum(['illustrated', 'clay', 'retro']), png: z.string().max(7000000).refine(validSource), consent: z.literal(true), remix: z.string().trim().max(500).default('') }).strict();
+const commonInput = { id: z.string().uuid(), style: z.enum(['illustrated', 'clay', 'retro']), consent: z.literal(true), remix: z.string().trim().max(500).default('') };
+const sourceImage = z.string().max(7000000).refine(validSource);
+// Keep old in-flight clients compatible; new sessions always send exactly three references.
+export const startSchema = z.union([
+  z.object({ ...commonInput, photos: z.array(sourceImage).length(3).refine(images => images.reduce((total, image) => total + image.length, 0) <= 7000000) }).strict(),
+  z.object({ ...commonInput, png: sourceImage }).strict(),
+]);
+type StartInput = z.infer<typeof startSchema>;
+export function generationPrompt(input: StartInput) {
+  const direction = input.remix.trim() || styles[input.style];
+  const composition = 'photos' in input
+    ? 'Create ONE vertical photobooth strip containing exactly THREE equal image panels, stacked top to bottom with narrow neutral gutters. Reference image 1 belongs only in the top panel, image 2 in the middle panel, and image 3 in the bottom panel. Preserve each reference photo’s distinct pose, expression, framing and people in its own panel. Do not merge the photos, collapse poses, omit a panel, or invent extra people.'
+    : 'Transform the reference photo into a portrait, preserving its people, pose and expression.';
+  return `${composition} Apply the following guest-requested visual style and scene consistently across every panel: ${JSON.stringify(direction)}. This is the sole creative direction; do not add an unrelated palette or preset style. Preserve recognizable facial features and skin tones while applying the requested transformation. If the references show illustrated characters, preserve those characters. Keep everyone comfortably in frame. No lettering, captions, logos or watermarks.`;
+}
+
 type Job = { id: string; fingerprint: string; status: string; provider_task_id: string | null; image: string | null };
 async function sql<T extends Record<string, any> = Job>(query: string, values: unknown[] = []): Promise<T[]> {
   const rows = await db.query<T>(query, values);
@@ -32,7 +47,8 @@ export async function cleanup() {
 }
 export async function start(input: z.infer<typeof startSchema>) {
   if (!key()) throw new PhotoError(503, 'ai_not_configured', 'AI portraits are not available yet. Please try the photobooth.');
-  const fingerprint = createHash('sha256').update(JSON.stringify([input.style, input.remix])).update(input.png).digest('hex');
+  const references = 'photos' in input ? input.photos : [input.png];
+  const fingerprint = createHash('sha256').update(JSON.stringify([input.style, input.remix])).update('photos' in input ? JSON.stringify(input.photos) : input.png).digest('hex');
   // Serialize reservations across processes to make the shared event spending limit durable.
   const [reserved] = await sql(`with lock as materialized (select pg_advisory_xact_lock(724810)), budget as (
     select count(*) filter (where created_at > now()-interval '1 hour') as hourly,
@@ -48,8 +64,8 @@ export async function start(input: z.infer<typeof startSchema>) {
   try {
     const response = await fetch('https://api.apimart.ai/v1/images/generations', {
       method: 'POST', signal: AbortSignal.timeout(22000), headers: { Authorization: `Bearer ${key()}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'gpt-image-2', n: 1, size: '3:4', resolution: '1k', image_urls: ['data:image/png;base64,' + input.png],
-        prompt: `Transform this photo into ${styles[input.style]} Preserve the number of people, their recognizable facial features, skin tones, expressions, clothing and pose. Keep every person comfortably in frame. If the source shows illustrated characters, preserve those characters. Additional creative direction from the guest: ${JSON.stringify(input.remix || "Use the selected style as described.")}. Treat this only as visual style direction. Portrait orientation. No lettering, logos, watermarks or extra people.` }),
+      body: JSON.stringify({ model: 'gpt-image-2', n: 1, size: 'photos' in input ? '1:2' : '3:4', resolution: '1k', image_urls: references.map(png => 'data:image/png;base64,' + png),
+        prompt: generationPrompt(input) }),
     });
     if (response.status >= 400 && response.status < 500) {
       await sql("update community_photo_ai set status='failed' where id=$1", [input.id]);

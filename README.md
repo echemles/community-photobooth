@@ -8,7 +8,7 @@ A simple, tablet-friendly webcam photobooth for community gatherings.
 
 Choose a layout, colour, photo effect and optional text, then take **three timed photos**. Your strip or postcard is immediately ready to email, send to WhatsApp or print.
 
-Tap **Remix a photo** to choose a favourite from those three shots. Select Illustrated, Clay or Retro, optionally describe a twist by voice or text, then review consent before generating. There is no separate AI capture mode.
+Tap **Remix all three** to transform the entire set into a three-panel keepsake. Describe the style by microphone or text; that description replaces the preset completely. Leave the description blank to use Illustrated, Clay or Retro. Review consent before generating. There is no separate AI capture mode.
 
 While AI works, a looping replay of your captured photos provides visual feedback alongside elapsed time and provider stage. Pause the replay at any time; reduced-motion preferences show a still image. You can return to the original keepsake, send it, and revisit your remix while generation continues. Reset clears photos, replay and recipient details.
 
@@ -73,4 +73,4 @@ Phone parsing uses libphonenumber-js 1.13.12; its MIT license is preserved in [`
 
 ### Generation latency
 
-The app sends only the selected photo, resized to 1024×768, and requests one portrait at APIMart's lowest tier, 1K (3:4). Although its documentation lists 768×1024, the live test returned 1086×1448; output size is provider-controlled, so no fixed pixel reduction or generation speedup is promised. Completion checks run every two seconds instead of four. The live end-to-end check completed in about 40 seconds. Provider queue time remains variable; elapsed time is real, and the replay is clearly labelled as the guest's photos rather than a partial AI result.
+The app sends all three photos in capture order, normally resized to 1024×768. It reduces references further if needed to keep their combined encoded size under 7 MB, without omitting a photo. A single APIMart job creates a vertical three-panel strip at 1K (1:2); this is one generation, not three separate billed requests. Output size and processing time are provider-controlled. Completion checks run every two seconds instead of four. The earlier single-photo check completed in about 40 seconds; three-panel timing can differ. Provider queue time remains variable; elapsed time is real, and the replay is clearly labelled as the guest's photos rather than a partial AI result.

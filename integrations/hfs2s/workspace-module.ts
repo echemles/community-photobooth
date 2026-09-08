@@ -15,7 +15,11 @@ async function relay(path: string, body?: unknown) {
 }
 const schema = z.object({ id, channel: z.enum(['email','whatsapp']), recipient: z.string().max(254), png: z.string().max(7000000), consent: z.literal(true) }).strict();
 function allowed(request: Request) { return ['https://community-photobooth.hfs2s.app', 'https://hfs2s.app'].includes(request.headers.get('origin') || ''); }
-const aiSchema = z.object({ id, style: z.enum(['illustrated','clay','retro']), png: z.string().max(7000000), consent: z.literal(true), remix: z.string().trim().max(500).default('') }).strict();
+const aiCommon = { id, style: z.enum(['illustrated','clay','retro']), consent: z.literal(true), remix: z.string().trim().max(500).default('') };
+const aiSchema = z.union([
+  z.object({ ...aiCommon, photos: z.array(z.string().max(7000000)).length(3).refine(images => images.reduce((total, image) => total + image.length, 0) <= 7000000) }).strict(),
+  z.object({ ...aiCommon, png: z.string().max(7000000) }).strict(),
+]);
 export const photobooth: Module = { id: 'photobooth', nav: { label: 'Photobooth', href: '/' }, routes: {
   'POST /send': async ({ body, request }) => {
     const origin = request.headers.get('origin');

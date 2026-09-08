@@ -340,3 +340,5 @@ dialog::backdrop { background: #14141399; backdrop-filter: blur(4px); }
 
 #ai-dictate { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 50%; text-decoration: none; flex-shrink: 0; }
 #ai-dictate[aria-pressed="true"] { background: #ad6045; border-color: #ad6045; color: #fff; }
+
+#ai-photo-choices .remix-source { position: relative; overflow: hidden; border-radius: 8px; border: 1px solid var(--line); }

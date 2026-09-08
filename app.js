@@ -2,7 +2,7 @@ const $ = (id) => document.getElementById(id);
 const video = $('video');
 const sample = $('sample');
 const keepsake = $('keepsake');
-const state = { mode: 'booth', editing: false, aiPhoto: 0, feedbackFrame: 0, feedbackPaused: false, aiStartedAt: null, aiImage: null, aiView: 'result', aiStyle: 'illustrated', aiWorking: false, aiTerminal: false, aiAttempt: null, aiEpoch: 0, aiAvailable: null, recognition: null, voiceTimer: null, stream: null, sample: false, ready: false, busy: false, requesting: false, cameraRequest: 0, photos: [], layout: 'strip', look: 'original', theme: 'cream', controller: null, lastSource: 'camera', capturedAt: null, sampleFrame: 0, facing: 'user' };
+const state = { mode: 'booth', editing: false, feedbackFrame: 0, feedbackPaused: false, aiStartedAt: null, aiImage: null, aiView: 'result', aiStyle: 'illustrated', aiWorking: false, aiTerminal: false, aiAttempt: null, aiEpoch: 0, aiAvailable: null, recognition: null, voiceTimer: null, stream: null, sample: false, ready: false, busy: false, requesting: false, cameraRequest: 0, photos: [], layout: 'strip', look: 'original', theme: 'cream', controller: null, lastSource: 'camera', capturedAt: null, sampleFrame: 0, facing: 'user' };
 const themes = { cream: { paper: '#faf9f5', ink: '#141413', label: 'Warm ivory' }, pink: { paper: '#e8b8a3', ink: '#4d2c20', label: 'Terracotta' }, green: { paper: '#d0d4bd', ink: '#333c2b', label: 'Soft olive' }, ink: { paper: '#262624', ink: '#faf9f5', label: 'Terminal dark' } };
 const filters = { original: 'none', mono: 'grayscale(1)', warm: 'sepia(.42) saturate(1.2)' };
 const prompts = ['A little smile', 'A little silly', 'All you'];
@@ -26,7 +26,7 @@ function updateControls() {
   $('result-eyebrow').textContent = ai ? 'A LITTLE IMAGINATION' : 'THREE PHOTOS. ALL YOU.';
   $('back-keepsake').hidden = !ai;
   $('remix-invitation').hidden = ai;
-  $('open-remix').textContent = state.aiImage ? 'See your remix ✳' : state.aiWorking ? 'Remix in progress…' : state.aiAttempt ? 'Check your remix ✳' : 'Remix a photo ✳';
+  $('open-remix').textContent = state.aiImage ? 'See your remix ✳' : state.aiWorking ? 'Remix in progress…' : state.aiAttempt ? 'Check your remix ✳' : 'Remix all three ✳';
   $('delivery-label').hidden = !canDeliver();
   $('delivery-label').textContent = ai ? 'Send your remix' : 'Send your keepsake';
   $('ai-photo-options').hidden = !!state.aiImage || !!state.aiAttempt;
@@ -116,7 +116,7 @@ function fitText(ctx, text, x, y, maxWidth, size, font = 'Georgia', minSize = 15
   ctx.fillText(text, x, y, maxWidth);
 }
 function renderKeepsake() {
-  if (state.mode === 'ai') { renderPortrait(); return; }
+  if (state.mode === 'ai' && state.aiImage && state.aiView === 'result') { renderPortrait(); return; }
   const postcard = state.layout === 'postcard'; keepsake.width = postcard ? 1200 : 600; keepsake.height = 1800;
   keepsake.classList.toggle('postcard', postcard);
   const ctx = keepsake.getContext('2d'), t = themes[state.theme], w = keepsake.width;
@@ -236,7 +236,7 @@ function selectChoice(group, selected) { document.querySelectorAll(group).forEac
 function resetSession() {
   if (state.busy) return;
   const source = state.lastSource;
-  clearAi(); state.mode = 'booth'; state.editing = false; state.aiPhoto = 0;
+  clearAi(); state.mode = 'booth'; state.editing = false; 
   deliveryPolling++; deliveryAttempt = null;
   $('send-dialog').close(); $('camera-dialog').close(); $('send-form').reset();
   $('send-status').textContent = ''; $('guest-note').value = ''; $('print-image').removeAttribute('src');
@@ -430,16 +430,11 @@ $('send-form').addEventListener('submit', async event => {
 
 // Separate one-photo experience. A session token prevents old requests painting a new guest's screen.
 function renderPortrait() {
-  if (!state.aiImage || state.aiView === 'original') {
-    keepsake.width = 1280; keepsake.height = 960; keepsake.classList.add('postcard');
-    const original = state.photos[state.aiPhoto]; if (original) keepsake.getContext('2d').drawImage(original, 0, 0);
-    return;
-  }
   keepsake.width = 1200; keepsake.height = 1800; keepsake.classList.add('postcard');
   const ctx = keepsake.getContext('2d'); ctx.fillStyle = '#faf9f5'; ctx.fillRect(0, 0, 1200, 1800);
   ctx.fillStyle = '#262624'; ctx.textAlign = 'center';
   fitText(ctx, 'Community Photobooth ✳', 600, 75, 1080, 32);
-  const source = state.aiView === 'original' ? state.photos[state.aiPhoto] : state.aiImage || state.photos[state.aiPhoto];
+  const source = state.aiImage;
   if (source) {
     const ratio = Math.min(1080 / source.width, 1440 / source.height);
     const w = source.width * ratio, h = source.height * ratio;
@@ -466,17 +461,11 @@ $('open-remix').addEventListener('click', () => setResultView('ai'));
 $('back-keepsake').addEventListener('click', () => setResultView('booth'));
 function renderPhotoChoices() {
   $('ai-photo-choices').replaceChildren(...state.photos.map((photo, index) => {
-    const button = document.createElement('button'); button.type = 'button'; button.dataset.photo = String(index);
-    button.setAttribute('aria-label', `Remix photo ${index + 1}`); button.setAttribute('aria-pressed', String(index === state.aiPhoto));
-    button.classList.toggle('selected', index === state.aiPhoto);
-    const image = new Image(); image.src = photo.toDataURL('image/jpeg', .7); image.alt = `Photo ${index + 1}`;
-    const label = document.createElement('span'); label.textContent = `0${index + 1}`; button.append(image, label); return button;
+    const panel = document.createElement('div'); panel.className = 'remix-source';
+    const image = new Image(); image.src = photo.toDataURL('image/jpeg', .7); image.alt = `Included photo ${index + 1}`;
+    const label = document.createElement('span'); label.textContent = `0${index + 1}`; panel.append(image, label); return panel;
   }));
 }
-$('ai-photo-choices').addEventListener('click', event => {
-  const button = event.target.closest('[data-photo]'); if (!button || state.aiAttempt || state.aiWorking) return;
-  state.aiPhoto = Number(button.dataset.photo); selectChoice('[data-photo]', button); renderKeepsake();
-});
 document.querySelectorAll('[data-ai-style]').forEach(button => button.addEventListener('click', () => {
   if (state.aiWorking || state.aiAttempt) return;
   state.aiStyle = button.dataset.aiStyle; selectChoice('[data-ai-style]', button);
@@ -493,7 +482,7 @@ async function checkAiAvailability() {
     const result = await response.json();
     if (epoch !== state.aiEpoch) return;
     state.aiAvailable = result.available === true;
-    if (!state.aiAttempt) $('ai-status').textContent = state.aiAvailable ? 'Choose one photo and a style. Recent remixes took around 30–75 seconds; some take longer.' : 'The AI studio is unavailable right now. Your original keepsake is ready to send.';
+    if (!state.aiAttempt) $('ai-status').textContent = state.aiAvailable ? 'All three photos will use your description. Leave it blank to use the selected preset. Generation may take a minute or more.' : 'The AI studio is unavailable right now. Your original keepsake is ready to send.';
   } catch { if (epoch === state.aiEpoch) { state.aiAvailable = false; $('ai-status').textContent = 'The AI studio could not connect. Go back to your keepsake and reopen Remix to try again.'; } }
   if (epoch === state.aiEpoch) updateControls();
 }
@@ -525,7 +514,8 @@ $('ai-generate').addEventListener('click', async () => {
   stopDictation();
   const epoch = state.aiEpoch;
   const fresh = !state.aiAttempt;
-  state.aiAttempt ||= { id: crypto.randomUUID(), style: state.aiStyle, remix: $('ai-remix').value.trim(), consent: true, png: remixSource() };
+  try { state.aiAttempt ||= { id: crypto.randomUUID(), style: state.aiStyle, remix: $('ai-remix').value.trim(), consent: true, photos: remixSources() }; }
+  catch (error) { aiNotice(error.message, true); return; }
   const attempt = state.aiAttempt; state.aiStartedAt ||= Date.now(); state.aiWorking = true; updateControls();
   aiNotice(fresh ? 'Sending your photo to the portrait studio…' : 'Checking your portrait…');
   try {
@@ -587,11 +577,19 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) stopD
 window.addEventListener('pagehide', stopDictation);
 
 
-function remixSource() {
-  const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 768;
-  canvas.getContext('2d').drawImage(state.photos[state.aiPhoto], 0, 0, 1024, 768);
-  return canvas.toDataURL('image/png').split(',')[1];
+function remixSources() {
+  // Bound the combined upload without dropping any of the three photos.
+  for (const [width, height] of [[1024,768], [768,576], [640,480]]) {
+    const images = state.photos.map(photo => {
+      const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(photo, 0, 0, width, height);
+      return canvas.toDataURL('image/png').split(',')[1];
+    });
+    if (images.reduce((total, image) => total + image.length, 0) <= 6900000) return images;
+  }
+  throw new Error('These photos are too large to remix. Your original keepsake is ready to send.');
 }
+
 function stopFeedback() { cancelAnimationFrame(state.feedbackFrame); state.feedbackFrame = 0; }
 function syncFeedback() {
   const visible = state.aiWorking && state.mode === 'ai' && !document.hidden;
@@ -602,7 +600,7 @@ function drawFeedback(now) {
   if (!state.aiWorking || state.mode !== 'ai' || document.hidden) { stopFeedback(); return; }
   const canvas = $('feedback-canvas'), ctx = canvas.getContext('2d');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const index = state.feedbackPaused || reduced ? state.aiPhoto : Math.floor(now / 1800) % 3;
+  const index = state.feedbackPaused || reduced ? 0 : Math.floor(now / 1800) % 3;
   if (state.photos[index]) cover(ctx, state.photos[index], 0, 0, canvas.width, canvas.height);
   const seconds = Math.max(0, Math.floor((Date.now() - state.aiStartedAt) / 1000));
   $('generation-elapsed').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
