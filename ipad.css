@@ -337,3 +337,6 @@ dialog::backdrop { background: #14141399; backdrop-filter: blur(4px); }
 @media (min-width:741px) and (max-height:750px) {
   #feedback-canvas { width: auto; max-width: 100%; max-height: calc(100dvh - 330px); margin-inline: auto; }
 }
+
+#ai-dictate { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 50%; text-decoration: none; flex-shrink: 0; }
+#ai-dictate[aria-pressed="true"] { background: #ad6045; border-color: #ad6045; color: #fff; }

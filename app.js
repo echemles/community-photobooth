@@ -555,7 +555,7 @@ function stopDictation() {
   clearTimeout(state.voiceTimer); state.voiceTimer = null;
   const recognition = state.recognition; state.recognition = null;
   if (recognition) { recognition.onresult = null; recognition.onend = null; recognition.onerror = null; recognition.abort(); }
-  $('ai-dictate').textContent = 'Describe it aloud'; $('ai-dictate').setAttribute('aria-pressed', 'false');
+  $('ai-dictate').setAttribute('aria-label', 'Describe your remix by voice'); $('ai-dictate').title = 'Describe your remix by voice'; $('ai-dictate').setAttribute('aria-pressed', 'false');
 }
 $('ai-dictate').addEventListener('click', () => {
   if (state.recognition) { state.recognition.stop(); return; }
@@ -578,7 +578,7 @@ $('ai-dictate').addEventListener('click', () => {
     if (state.recognition !== recognition) return;
     stopDictation(); $('voice-status').textContent = 'Check your words above. Edit anything before creating your portrait.';
   };
-  try { recognition.start(); $('ai-dictate').textContent = '● Listening… Tap to stop'; $('ai-dictate').setAttribute('aria-pressed', 'true');
+  try { recognition.start(); $('ai-dictate').setAttribute('aria-label', 'Stop listening'); $('ai-dictate').title = 'Stop listening'; $('ai-dictate').setAttribute('aria-pressed', 'true');
     $('voice-status').textContent = 'Describe the style, setting, or mood you imagine.';
     state.voiceTimer = setTimeout(() => { if (state.recognition === recognition) recognition.stop(); }, 30000);
   } catch { stopDictation(); $('voice-status').textContent = 'Voice input could not start. You can type your idea above.'; }
