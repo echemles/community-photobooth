@@ -373,3 +373,12 @@ dialog::backdrop { background: #14141399; backdrop-filter: blur(4px); }
   #keepsake-preview { --preview-height: min(300px, calc(100dvh - 640px)); }
   #booth-page[data-mode=ai] .paper-stage { max-height: none; }
 }
+
+
+/* The AI invitation is the main creative action on the keepsake screen. */
+#open-remix { background: linear-gradient(110deg, #e69b7d, #f0b99b); color: #3b2118; border: 1px solid #c58062; box-shadow: 0 4px 14px #a9583424; gap: 12px; }
+#open-remix:hover { background: linear-gradient(110deg, #eaa78a, #f3c3a9); }
+#open-remix:active { box-shadow: 0 1px 4px #a9583424; }
+#open-remix .remix-sparkles { width: 27px; height: 27px; flex: none; }
+#open-remix #remix-label { font-weight: 700; }
+#open-remix .remix-ai-badge { padding: 3px 6px; border: 1px solid #3b21183d; border-radius: 5px; font-size: 10px; line-height: 1; font-weight: 700; letter-spacing: .8px; background: #ffffff30; }

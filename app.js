@@ -26,7 +26,7 @@ function updateControls() {
   $('result-eyebrow').textContent = ai ? 'A LITTLE IMAGINATION' : 'THREE PHOTOS. ALL YOU.';
   $('back-keepsake').hidden = !ai;
   $('remix-invitation').hidden = ai;
-  $('open-remix').textContent = state.aiImage ? 'See your remix ✳' : state.aiWorking ? 'Remix in progress…' : state.aiAttempt ? 'Check your remix ✳' : 'Remix all three ✳';
+  $('remix-label').textContent = state.aiImage ? 'See your remix' : state.aiWorking ? 'Remix in progress…' : state.aiAttempt ? 'Check your remix' : 'Remix all three';
   $('delivery-label').hidden = !canDeliver();
   $('delivery-label').textContent = ai ? 'Send your remix' : 'Send your keepsake';
   $('ai-photo-options').hidden = !!state.aiImage || !!state.aiAttempt;
