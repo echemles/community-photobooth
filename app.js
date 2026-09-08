@@ -457,7 +457,7 @@ $('send-form').addEventListener('submit', async event => {
 function clearAi() {
   stopDictation(); stopFeedback(); state.aiStartedAt = null; $('ai-remix').value = '';
   state.aiEpoch++; state.aiTerminal = false; state.aiWorking = false; state.aiImage = null; state.aiPhotos = []; state.aiAttempt = null; state.aiView = 'result';
-  $('ai-consent').checked = false; aiNotice(''); $('ai-generate').textContent = 'Create my remix ✳';
+  $('ai-consent').checked = false; aiNotice(''); $('ai-generate-label').textContent = 'Create my remix';
   selectChoice('[data-ai-view]', document.querySelector('[data-ai-view="result"]'));
 }
 function setResultView(mode) {
@@ -546,7 +546,7 @@ $('ai-generate').addEventListener('click', async () => {
     }
     if (epoch === state.aiEpoch) aiNotice('Your portrait is taking longer than expected. Tap Check portrait status in a moment.');
   } catch (error) { if (epoch === state.aiEpoch) aiNotice(error.name === 'TimeoutError' || error instanceof TypeError ? 'Connection interrupted. Tap Check portrait status to continue without submitting again.' : error.message, true); }
-  finally { if (epoch === state.aiEpoch) { state.aiWorking = false; $('ai-generate').textContent = state.aiAttempt ? 'Check portrait status' : 'Create my remix ✳'; updateControls(); } }
+  finally { if (epoch === state.aiEpoch) { state.aiWorking = false; $('ai-generate-label').textContent = state.aiAttempt ? 'Check portrait status' : 'Create my remix'; updateControls(); } }
 });
 
 const assetBase = clientScript ? clientScript.src.replace(/app\.js.*$/, '') : new URL('assets/', location.href).href;
