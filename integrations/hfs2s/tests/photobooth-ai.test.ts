@@ -71,7 +71,7 @@ it('sends all three references in capture order and lets the guest description r
  const transport=vi.fn().mockResolvedValue({ok:true,status:200,json:async()=>({data:[{task_id:'task_three'}]})});vi.stubGlobal('fetch',transport);
  await start(input);const body=JSON.parse(transport.mock.calls[0][1].body);
  expect(body.image_urls).toEqual([first,second,third].map(png=>'data:image/png;base64,'+png));expect(body.n).toBe(1);expect(body.size).toBe('1:2');
- expect(body.prompt).toContain('exactly THREE');expect(body.prompt).toContain('image 2 in the middle');expect(body.prompt).toContain('Black and white manga');expect(body.prompt).not.toContain('clay animation');expect(body.prompt).not.toContain('terracotta');
+ expect(body.prompt).toContain('exactly THREE');expect(body.prompt).toContain('boundaries precisely at 1/3 and 2/3');expect(body.prompt).toContain('no gutters, gaps, margins, paper frame, footer, date, text');expect(body.prompt).toContain('image 2 in the middle');expect(body.prompt).toContain('Black and white manga');expect(body.prompt).not.toContain('clay animation');expect(body.prompt).not.toContain('terracotta');
 });
 it('requires exactly three bounded references and uses the preset only when no description is supplied',()=>{
  const input={id,style:'clay',photos:[source(),source(),source()],remix:'',consent:true};

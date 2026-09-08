@@ -2,7 +2,7 @@ const $ = (id) => document.getElementById(id);
 const video = $('video');
 const sample = $('sample');
 const keepsake = $('keepsake');
-const state = { mode: 'booth', feedbackFrame: 0, feedbackPaused: false, aiStartedAt: null, aiImage: null, aiView: 'result', aiStyle: 'illustrated', aiWorking: false, aiTerminal: false, aiAttempt: null, aiEpoch: 0, aiAvailable: null, recognition: null, voiceTimer: null, stream: null, sample: false, ready: false, busy: false, requesting: false, cameraRequest: 0, photos: [], layout: 'strip', look: 'original', theme: 'cream', controller: null, lastSource: 'camera', capturedAt: null, sampleFrame: 0, facing: 'user' };
+const state = { mode: 'booth', feedbackFrame: 0, feedbackPaused: false, aiStartedAt: null, aiImage: null, aiPhotos: [], aiView: 'result', aiStyle: 'illustrated', aiWorking: false, aiTerminal: false, aiAttempt: null, aiEpoch: 0, aiAvailable: null, recognition: null, voiceTimer: null, stream: null, sample: false, ready: false, busy: false, requesting: false, cameraRequest: 0, photos: [], layout: 'strip', look: 'original', theme: 'cream', controller: null, lastSource: 'camera', capturedAt: null, sampleFrame: 0, facing: 'user' };
 const themes = { cream: { paper: '#faf9f5', ink: '#141413', label: 'Warm ivory' }, pink: { paper: '#e8b8a3', ink: '#4d2c20', label: 'Terracotta' }, green: { paper: '#d0d4bd', ink: '#333c2b', label: 'Soft olive' }, ink: { paper: '#262624', ink: '#faf9f5', label: 'Terminal dark' } };
 const filters = { original: 'none', mono: 'grayscale(1)', warm: 'sepia(.42) saturate(1.2)' };
 const prompts = ['A little smile', 'A little silly', 'All you'];
@@ -33,7 +33,7 @@ function updateControls() {
   $('ai-photo-options').disabled = state.aiWorking;
   const waiting = ai && state.aiWorking;
   $('waiting-preview').hidden = !waiting;
-  keepsake.hidden = waiting;
+  $('keepsake-preview').hidden = waiting;
   $('booth-page').dataset.waiting = String(waiting);
   document.querySelectorAll('.journey span').forEach((el, index) => el.classList.toggle('current', index === ($('send-dialog').open ? 2 : complete ? 1 : 0)));
   syncFeedback();
@@ -107,30 +107,63 @@ function fitText(ctx, text, x, y, maxWidth, size, font = 'Georgia', minSize = 15
   while (ctx.measureText(text).width > maxWidth && size > minSize) { size -= 1; ctx.font = `${size}px ${font}`; }
   ctx.fillText(text, x, y, maxWidth);
 }
+// One geometry definition drives the HTML preview and the image sent or printed.
+const keepsakeLayouts = {
+  strip: { width: 600, boxes: [[32,112,536,402], [32,538,536,402], [32,964,536,402]] },
+  postcard: { width: 1200, boxes: [[60,180,1080,810], [60,1018,526,394.5], [614,1018,526,394.5]] },
+};
 function renderKeepsake() {
-  if (state.mode === 'ai' && state.aiImage && state.aiView === 'result') { renderPortrait(); return; }
-  const postcard = state.layout === 'postcard'; keepsake.width = postcard ? 1200 : 600; keepsake.height = 1800;
-  keepsake.classList.toggle('postcard', postcard);
-  const ctx = keepsake.getContext('2d'), t = themes[state.theme], w = keepsake.width;
-  ctx.fillStyle = t.paper; ctx.fillRect(0, 0, w, 1800); ctx.textAlign = 'center'; ctx.fillStyle = t.ink;
-  fitText(ctx, 'Community Photobooth ✳', w / 2, 70, w - 80, 32);
-  const boxes = postcard ? [[60, 125, 1080, 740], [60, 893, 526, 470], [614, 893, 526, 470]] : [[32, 112, 536, 402], [32, 538, 536, 402], [32, 964, 536, 402]];
-  boxes.forEach(([x, y, width, height], i) => {
-    if (state.photos[i]) cover(ctx, filteredPhoto(state.photos[i]), x, y, width, height);
-    else {
-      ctx.fillStyle = state.theme === 'ink' ? '#4c574b' : '#d5dcc7'; ctx.fillRect(x, y, width, height);
-      ctx.fillStyle = state.theme === 'ink' ? '#89957f' : '#b1bea0'; ctx.font = '110px Georgia'; ctx.fillText('✳', x + width / 2, y + height / 2 + 23);
-      ctx.font = '18px Arial'; ctx.fillText(`0${i + 1}`, x + width / 2, y + height - 30);
-    }
+  const remixed = state.mode === 'ai' && state.aiImage && state.aiView === 'result';
+  const photos = remixed ? state.aiPhotos : state.photos;
+  const postcard = state.layout === 'postcard', layout = keepsakeLayouts[state.layout];
+  const w = layout.width, t = themes[state.theme], preview = $('keepsake-preview');
+  keepsake.width = w; keepsake.height = 1800;
+  preview.style.setProperty('--paper-ratio', String(w / 1800));
+  preview.style.background = t.paper; preview.style.color = t.ink;
+  preview.dataset.layout = state.layout;
+  preview.replaceChildren();
+  const ctx = keepsake.getContext('2d');
+  ctx.fillStyle = t.paper; ctx.fillRect(0, 0, w, 1800); ctx.textAlign = 'center';
+  function caption(text, y, size, font = 'Georgia', maxWidth = w - 65) {
+    ctx.font = `${size}px ${font}`;
+    while (ctx.measureText(text).width > maxWidth && size > 15) { size--; ctx.font = `${size}px ${font}`; }
+    size *= Math.min(1, maxWidth / (ctx.measureText(text).width || 1));
+    ctx.font = `${size}px ${font}`;
+    ctx.fillStyle = t.ink; ctx.fillText(text, w / 2, y);
+    const line = document.createElement('div'); line.className = 'keepsake-caption'; line.textContent = text;
+    Object.assign(line.style, { top: `${(y - size * .85) / 18}%`, fontSize: `${size / w * 100}cqw`, fontFamily: font, maxWidth: `${maxWidth / w * 100}%` });
+    preview.append(line);
+  }
+  caption('Community Photobooth ✳', 70, 32, 'Georgia', w - 80);
+  layout.boxes.forEach(([x, y, width, height], i) => {
+    const tile = document.createElement('canvas'); tile.width = 1024; tile.height = 768;
+    const tileContext = tile.getContext('2d');
+    if (photos[i]) cover(tileContext, remixed ? photos[i] : filteredPhoto(photos[i]), 0, 0, 1024, 768);
+    else { tileContext.fillStyle = state.theme === 'ink' ? '#4c574b' : '#d5dcc7'; tileContext.fillRect(0, 0, 1024, 768); }
+    cover(ctx, tile, x, y, width, height);
+    const image = document.createElement('img'); image.className = 'keepsake-photo'; image.alt = `${remixed ? 'Remixed photo' : 'Photo'} ${i + 1}`;
+    image.width = 1024; image.height = 768; image.src = tile.toDataURL('image/png');
+    Object.assign(image.style, { left: `${x / w * 100}%`, top: `${y / 18}%`, width: `${width / w * 100}%`, height: `${height / 18}%` });
+    preview.append(image);
   });
-  ctx.fillStyle = t.ink;
   const date = state.capturedAt || new Date();
-  ctx.font = `${postcard ? 27 : 20}px Arial`; ctx.fillText(date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase(), w / 2, 1513);
+  caption(date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase(), 1513, postcard ? 27 : 20, 'Arial');
   const note = $('guest-note').value.trim();
-  if (note) { fitText(ctx, note, w / 2, 1587, w - 65, postcard ? 35 : 25, 'Georgia'); }
-  ctx.font = '36px Georgia'; ctx.fillText('♡', w / 2, 1670);
-  ctx.font = `${postcard ? 23 : 15}px Arial`; ctx.fillText('GOOD PEOPLE. GREAT MEMORIES.', w / 2, 1740);
+  if (note) caption(note, 1587, postcard ? 35 : 25);
+  caption('♡', 1670, 36);
+  caption('GOOD PEOPLE. GREAT MEMORIES.', 1740, postcard ? 23 : 15, 'Arial');
 }
+// The provider returns a borderless three-row image; normalize each row independently.
+function splitRemixPhotos(image) {
+  return Array.from({ length: 3 }, (_, i) => {
+    const tile = document.createElement('canvas'); tile.width = 1024; tile.height = 768;
+    const sw = image.naturalWidth || image.width, panelHeight = (image.naturalHeight || image.height) / 3;
+    const cropWidth = Math.min(sw, panelHeight * 4 / 3), cropHeight = cropWidth * 3 / 4;
+    tile.getContext('2d').drawImage(image, (sw - cropWidth) / 2, i * panelHeight + (panelHeight - cropHeight) / 2, cropWidth, cropHeight, 0, 0, 1024, 768);
+    return tile;
+  });
+}
+
 function stopTracks() { if (state.stream) state.stream.getTracks().forEach(track => track.stop()); state.stream = null; video.srcObject = null; }
 function stopCamera(message = 'Camera off. Your captured photos are still here.') {
   state.cameraRequest++; state.requesting = false; state.controller?.abort(); stopTracks();
@@ -263,7 +296,7 @@ $('print').addEventListener('click', async () => {
   if (!canDeliver()) return;
   const previousView = state.aiView; state.aiView = 'result'; renderKeepsake();
   const image = $('print-image'); image.src = keepsake.toDataURL('image/png');
-  state.aiView = previousView; renderKeepsake(); image.classList.toggle('postcard', state.mode === 'ai' || state.layout === 'postcard');
+  state.aiView = previousView; renderKeepsake(); image.classList.toggle('postcard', state.layout === 'postcard');
   try { await image.decode(); say('Choose 4 × 6 inch paper, 100% scale, and turn off headers and footers in the print dialog.'); window.print(); } catch { say('The print preview could not load. Please try Print again.', true); }
 });
 function focusBooth(enabled) {
@@ -420,24 +453,10 @@ $('send-form').addEventListener('submit', async event => {
 });
 
 
-// Separate one-photo experience. A session token prevents old requests painting a new guest's screen.
-function renderPortrait() {
-  keepsake.width = 1200; keepsake.height = 1800; keepsake.classList.add('postcard');
-  const ctx = keepsake.getContext('2d'); ctx.fillStyle = '#faf9f5'; ctx.fillRect(0, 0, 1200, 1800);
-  ctx.fillStyle = '#262624'; ctx.textAlign = 'center';
-  fitText(ctx, 'Community Photobooth ✳', 600, 75, 1080, 32);
-  const source = state.aiImage;
-  if (source) {
-    const ratio = Math.min(1080 / source.width, 1440 / source.height);
-    const w = source.width * ratio, h = source.height * ratio;
-    ctx.drawImage(source, (1200 - w) / 2, 120 + (1440 - h) / 2, w, h);
-  }
-  ctx.font = '26px Arial'; ctx.fillText(state.aiImage && state.aiView !== 'original' ? 'AI PORTRAIT' : 'YOUR ORIGINAL', 600, 1650);
-  ctx.font = '24px Georgia'; ctx.fillText('A little imagination. A memory to keep.', 600, 1720);
-}
+// A session token prevents old requests painting a new guest's screen.
 function clearAi() {
   stopDictation(); stopFeedback(); state.aiStartedAt = null; $('ai-remix').value = '';
-  state.aiEpoch++; state.aiTerminal = false; state.aiWorking = false; state.aiImage = null; state.aiAttempt = null; state.aiView = 'result';
+  state.aiEpoch++; state.aiTerminal = false; state.aiWorking = false; state.aiImage = null; state.aiPhotos = []; state.aiAttempt = null; state.aiView = 'result';
   $('ai-consent').checked = false; aiNotice(''); $('ai-generate').textContent = 'Create my remix ✳';
   selectChoice('[data-ai-view]', document.querySelector('[data-ai-view="result"]'));
 }
@@ -488,7 +507,7 @@ async function showAiStatus(result, epoch) {
     const image = new Image(); image.src = result.image;
     try { await image.decode(); } catch { throw new Error('Your portrait is ready, but its image could not display. Tap Check portrait status to load it again.'); }
     if (epoch !== state.aiEpoch) return true;
-    state.aiImage = image; state.aiView = 'result'; renderKeepsake();
+    state.aiPhotos = splitRemixPhotos(image); state.aiImage = image; state.aiView = 'result'; renderKeepsake();
     aiNotice('Your portrait is ready. Have a look, then send it home.');
     return true;
   }

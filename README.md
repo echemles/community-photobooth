@@ -74,3 +74,7 @@ Phone parsing uses libphonenumber-js 1.13.12; its MIT license is preserved in [`
 ### Generation latency
 
 The app sends all three photos in capture order, normally resized to 1024×768. It reduces references further if needed to keep their combined encoded size under 7 MB, without omitting a photo. A single APIMart job creates a vertical three-panel strip at 1K (1:2); this is one generation, not three separate billed requests. Output size and processing time are provider-controlled. Completion checks run every two seconds instead of four. The earlier single-photo check completed in about 40 seconds; three-panel timing can differ. Provider queue time remains variable; elapsed time is real, and the replay is clearly labelled as the guest's photos rather than a partial AI result.
+
+## Shared original and remix layout
+
+Original and remixed keepsakes use the same HTML template and export geometry: 600×1800 for a strip or 1200×1800 for a postcard. Every photo is normalized to 1024×768 (4:3). The AI returns one borderless three-row image, which is split and centre-cropped into three tiles in capture order. The app supplies all framing and text: selected colour, capture date, optional guest message, heart and original footer. AI-specific footer text is removed. HTML uses positioned images and text; a canvas using the same geometry produces the emailed, WhatsApp and printed PNG. Provider compliance with the three-row composition still affects the contents of each crop.

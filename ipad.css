@@ -364,3 +364,12 @@ dialog::backdrop { background: #14141399; backdrop-filter: blur(4px); }
   #booth-page[data-mode=booth][data-step=result] { height: auto; min-height: calc(100dvh - 60px); }
   #booth-page[data-mode=booth][data-step=result] .booth-layout { grid-template-rows: auto; }
 }
+
+/* HTML keepsake: fixed print geometry, scaled as one unit for the available screen. */
+#keepsake-preview { --paper-ratio: .333333; --preview-height: min(740px, calc(100dvh - 160px)); position: relative; flex: none; width: min(100%, calc(var(--preview-height) * var(--paper-ratio))); aspect-ratio: var(--paper-ratio); container-type: inline-size; overflow: hidden; box-shadow: 0 8px 20px #14141316; }
+.keepsake-photo { position: absolute; display: block; object-fit: cover; }
+.keepsake-caption { position: absolute; left: 50%; transform: translateX(-50%); width: max-content; white-space: nowrap; text-align: center; line-height: 1; overflow: hidden; }
+@media (max-width:740px) {
+  #keepsake-preview { --preview-height: min(300px, calc(100dvh - 640px)); }
+  #booth-page[data-mode=ai] .paper-stage { max-height: none; }
+}
