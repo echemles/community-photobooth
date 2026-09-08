@@ -2,7 +2,7 @@ const $ = (id) => document.getElementById(id);
 const video = $('video');
 const sample = $('sample');
 const keepsake = $('keepsake');
-const state = { mode: 'booth', editing: false, feedbackFrame: 0, feedbackPaused: false, aiStartedAt: null, aiImage: null, aiView: 'result', aiStyle: 'illustrated', aiWorking: false, aiTerminal: false, aiAttempt: null, aiEpoch: 0, aiAvailable: null, recognition: null, voiceTimer: null, stream: null, sample: false, ready: false, busy: false, requesting: false, cameraRequest: 0, photos: [], layout: 'strip', look: 'original', theme: 'cream', controller: null, lastSource: 'camera', capturedAt: null, sampleFrame: 0, facing: 'user' };
+const state = { mode: 'booth', feedbackFrame: 0, feedbackPaused: false, aiStartedAt: null, aiImage: null, aiView: 'result', aiStyle: 'illustrated', aiWorking: false, aiTerminal: false, aiAttempt: null, aiEpoch: 0, aiAvailable: null, recognition: null, voiceTimer: null, stream: null, sample: false, ready: false, busy: false, requesting: false, cameraRequest: 0, photos: [], layout: 'strip', look: 'original', theme: 'cream', controller: null, lastSource: 'camera', capturedAt: null, sampleFrame: 0, facing: 'user' };
 const themes = { cream: { paper: '#faf9f5', ink: '#141413', label: 'Warm ivory' }, pink: { paper: '#e8b8a3', ink: '#4d2c20', label: 'Terracotta' }, green: { paper: '#d0d4bd', ink: '#333c2b', label: 'Soft olive' }, ink: { paper: '#262624', ink: '#faf9f5', label: 'Terminal dark' } };
 const filters = { original: 'none', mono: 'grayscale(1)', warm: 'sepia(.42) saturate(1.2)' };
 const prompts = ['A little smile', 'A little silly', 'All you'];
@@ -37,9 +37,7 @@ function updateControls() {
   $('booth-page').dataset.waiting = String(waiting);
   document.querySelectorAll('.journey span').forEach((el, index) => el.classList.toggle('current', index === ($('send-dialog').open ? 2 : complete ? 1 : 0)));
   syncFeedback();
-  $('settings').hidden = ai || (complete && !state.editing);
-  $('edit-keepsake').hidden = ai;
-  $('edit-keepsake').textContent = state.editing ? 'Done customizing' : 'Customize frame';
+  $('settings').hidden = ai || !complete;
   $('reset').hidden = ai;
   $('ai-controls').hidden = !ai || !complete;
   document.querySelector('.result-actions').hidden = !canDeliver();
@@ -54,12 +52,6 @@ function updateControls() {
   document.querySelectorAll('[data-mode]').forEach(button => { button.disabled = state.busy || state.requesting; });
   $('booth-page').dataset.step = complete ? 'result' : 'camera';
   $('result').hidden = !complete;
-  $('start-options').hidden = complete || ai;
-  const settingsParent = complete ? document.querySelector('.result-options') : $('start-options');
-  if ($('settings').parentElement !== settingsParent) {
-    if (complete) settingsParent.insertBefore($('settings'), document.querySelector('.result-actions'));
-    else settingsParent.append($('settings'));
-  }
   document.querySelector('.camera-column').hidden = complete;
   $('capture').hidden = !state.ready || state.busy || complete;
   $('shot-tray').hidden = !state.busy;
@@ -236,7 +228,7 @@ function selectChoice(group, selected) { document.querySelectorAll(group).forEac
 function resetSession() {
   if (state.busy) return;
   const source = state.lastSource;
-  clearAi(); state.mode = 'booth'; state.editing = false; 
+  clearAi(); state.mode = 'booth';
   deliveryPolling++; deliveryAttempt = null;
   $('send-dialog').close(); $('camera-dialog').close(); $('send-form').reset();
   $('send-status').textContent = ''; $('guest-note').value = ''; $('print-image').removeAttribute('src');
@@ -456,7 +448,6 @@ function setResultView(mode) {
   renderKeepsake(); updateControls();
   if (mode === 'ai' && !state.aiAttempt) void checkAiAvailability();
 }
-$('edit-keepsake').addEventListener('click', () => { state.editing = !state.editing; updateControls(); });
 $('open-remix').addEventListener('click', () => setResultView('ai'));
 $('back-keepsake').addEventListener('click', () => setResultView('booth'));
 function renderPhotoChoices() {

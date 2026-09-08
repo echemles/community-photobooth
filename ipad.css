@@ -342,3 +342,25 @@ dialog::backdrop { background: #14141399; backdrop-filter: blur(4px); }
 #ai-dictate[aria-pressed="true"] { background: #ad6045; border-color: #ad6045; color: #fff; }
 
 #ai-photo-choices .remix-source { position: relative; overflow: hidden; border-radius: 8px; border: 1px solid var(--line); }
+
+/* Capture first; styling is visible directly beside the completed keepsake. */
+#booth-page[data-step=camera] .booth-layout { grid-template-columns: minmax(0,1fr); grid-template-rows: minmax(0,1fr); gap: 0; }
+#booth-page[data-step=camera] .camera-column { width: min(100%, calc((100dvh - 260px) * 4 / 3)); }
+#remix-invitation { padding: 10px 0; margin: 0 0 12px; border-top: 1px solid var(--line); border-bottom: 0; }
+#booth-page[data-mode=booth] .result-nav { min-height: 20px; margin-bottom: 6px; }
+#booth-page[data-mode=booth] #result-title { font-size: 30px; margin-bottom: 14px; }
+@media (min-width:741px) and (max-height:750px) {
+  #booth-page[data-mode=booth] #result-title { font-size: 26px; margin-bottom: 10px; }
+  #result #settings { grid-template-columns: 1fr 1fr; gap: 10px 12px; margin-bottom: 10px; }
+  #result #settings .setting:last-child { grid-column: 1 / -1; }
+  #result .layout-choice { padding: 4px; gap: 2px; font-size: 11px; }
+  #result .layout-icon { display: none; }
+  #result .look { font-size: 11px; }
+  #remix-invitation { padding: 8px 0; margin-bottom: 8px; }
+  #open-remix { min-height: 46px; }
+}
+@media (max-width:740px) {
+  #booth-page[data-step=camera] { height: calc(100dvh - 60px); }
+  #booth-page[data-mode=booth][data-step=result] { height: auto; min-height: calc(100dvh - 60px); }
+  #booth-page[data-mode=booth][data-step=result] .booth-layout { grid-template-rows: auto; }
+}

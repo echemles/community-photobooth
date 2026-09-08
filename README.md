@@ -6,7 +6,7 @@ A simple, tablet-friendly webcam photobooth for community gatherings.
 
 ## One capture, more possibilities
 
-Choose a layout, colour, photo effect and optional text, then take **three timed photos**. Your strip or postcard is immediately ready to email, send to WhatsApp or print.
+Take **three timed photos** with a large camera preview. Layout, colour, photo effects and optional text then appear directly beside your finished keepsake, updating its preview as you customize. Your strip or postcard is ready to email, send to WhatsApp or print.
 
 Tap **Remix all three** to transform the entire set into a three-panel keepsake. Describe the style by microphone or text; that description replaces the preset completely. Leave the description blank to use Illustrated, Clay or Retro. Review consent before generating. There is no separate AI capture mode.
 
@@ -53,7 +53,7 @@ All provider credentials stay server-side. No credentials, guest photos, recipie
 
 ## Reliability and privacy
 
-Captures stay in browser memory until the guest chooses to transform or send them. AI submission sends one image and the reviewed remix text. APIMart has its own retention policy; local generated-image storage expires after two hours. Delivery queues clear images and recipient details after delivery or expiry.
+Captures stay in browser memory until the guest chooses to transform or send them. AI submission sends all three photos and the reviewed remix text. APIMart has its own retention policy; local generated-image storage expires after two hours. Delivery queues clear images and recipient details after delivery or expiry.
 
 AI requests reserve an idempotency record before submission. A lost connection does not automatically create another billed portrait. Image retrieval accepts only approved result hosts and disallows redirects. Retrieval errors appear visibly and offer **Check portrait status**. Resend uses a stable idempotency key, while Iris uses leased jobs and transport receipts.
 
