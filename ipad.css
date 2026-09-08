@@ -334,3 +334,6 @@ dialog::backdrop { background: #14141399; backdrop-filter: blur(4px); }
   #feedback-canvas { max-height: 250px; object-fit: contain; }
   #remix-invitation { padding: 12px 0; margin-bottom: 12px; }
 }
+@media (min-width:741px) and (max-height:750px) {
+  #feedback-canvas { width: auto; max-width: 100%; max-height: calc(100dvh - 330px); margin-inline: auto; }
+}
