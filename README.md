@@ -73,4 +73,4 @@ Phone parsing uses libphonenumber-js 1.13.12; its MIT license is preserved in [`
 
 ### Generation latency
 
-The app sends only the selected photo, resized to 1024×768, and requests one 768×1024 portrait at APIMart's 1K tier (3:4). This halves output pixels compared with the previous 1024×1536 request. Completion checks run every two seconds instead of four. Provider queue time remains variable; elapsed time is real, and the replay is clearly labelled as the guest's photos rather than a partial AI result.
+The app sends only the selected photo, resized to 1024×768, and requests one portrait at APIMart's lowest tier, 1K (3:4). Although its documentation lists 768×1024, the live test returned 1086×1448; output size is provider-controlled, so no fixed pixel reduction or generation speedup is promised. Completion checks run every two seconds instead of four. The live end-to-end check completed in about 40 seconds. Provider queue time remains variable; elapsed time is real, and the replay is clearly labelled as the guest's photos rather than a partial AI result.
