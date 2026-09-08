@@ -22,7 +22,7 @@ it('submits one reference image, the selected preset, and reviewed remix text',a
  const transport=vi.fn().mockResolvedValue({ok:true,status:200,json:async()=>({data:[{task_id:'task_123'}]})});vi.stubGlobal('fetch',transport);
  expect(await start(input())).toEqual({id,status:'processing'});
  const [url,options]=transport.mock.calls[0], body=JSON.parse(options.body);
- expect(url).toBe('https://api.apimart.ai/v1/images/generations');expect(body.image_urls).toEqual(['data:image/png;base64,'+source()]);expect(body.n).toBe(1);expect(body.prompt).toContain('On the moon');expect(body.prompt).toContain('clay');
+ expect(url).toBe('https://api.apimart.ai/v1/images/generations');expect(body.image_urls).toEqual(['data:image/png;base64,'+source()]);expect(body.n).toBe(1);expect(body.size).toBe('3:4');expect(body.resolution).toBe('1k');expect(body.prompt).toContain('On the moon');expect(body.prompt).toContain('clay');
 });
 it('never resubmits a timed-out or duplicate generation',async()=>{
  const fingerprint=createHash('sha256').update(JSON.stringify(['clay','On the moon'])).update(source()).digest('hex');
@@ -56,4 +56,10 @@ it('reports a completed-but-unloadable image as a recoverable error without resu
  mock.query.mockResolvedValueOnce([]).mockResolvedValueOnce([]).mockResolvedValueOnce([row]).mockResolvedValueOnce([row]).mockResolvedValue([]);
  const transport=vi.fn().mockResolvedValueOnce(new Response(JSON.stringify({data:{status:'completed',result:{images:[{url:['https://unexpected.example/result.png']}]}}}),{status:200}));vi.stubGlobal('fetch',transport);
  await expect(status(id)).rejects.toMatchObject({status:502,code:'ai_image_unavailable'});expect(transport).toHaveBeenCalledTimes(1);
+});
+
+it('accepts the smaller single-photo reference but rejects arbitrary dimensions',()=>{
+ const bytes=Buffer.from(source(),'base64');bytes.writeUInt32BE(1024,16);bytes.writeUInt32BE(768,20);
+ expect(startSchema.safeParse({...input(),png:bytes.toString('base64')}).success).toBe(true);
+ bytes.writeUInt32BE(9999,16);expect(startSchema.safeParse({...input(),png:bytes.toString('base64')}).success).toBe(false);
 });

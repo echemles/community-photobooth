@@ -13,7 +13,7 @@ function validSource(value: string) {
   const b = Buffer.from(value, 'base64');
   return b.length >= 45 && b.length <= 5 * 1024 * 1024 && b.toString('base64') === value
     && b.subarray(0, 8).toString('hex') === '89504e470d0a1a0a' && b.toString('ascii', 12, 16) === 'IHDR'
-    && b.readUInt32BE(16) === 1280 && b.readUInt32BE(20) === 960
+    && [[1280,960], [1024,768]].some(([w,h]) => b.readUInt32BE(16) === w && b.readUInt32BE(20) === h)
     && b.subarray(-12).toString('hex') === '0000000049454e44ae426082';
 }
 export const startSchema = z.object({ id: z.string().uuid(), style: z.enum(['illustrated', 'clay', 'retro']), png: z.string().max(7000000).refine(validSource), consent: z.literal(true), remix: z.string().trim().max(500).default('') }).strict();
@@ -48,7 +48,7 @@ export async function start(input: z.infer<typeof startSchema>) {
   try {
     const response = await fetch('https://api.apimart.ai/v1/images/generations', {
       method: 'POST', signal: AbortSignal.timeout(22000), headers: { Authorization: `Bearer ${key()}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'gpt-image-2', n: 1, size: '2:3', resolution: '1k', image_urls: ['data:image/png;base64,' + input.png],
+      body: JSON.stringify({ model: 'gpt-image-2', n: 1, size: '3:4', resolution: '1k', image_urls: ['data:image/png;base64,' + input.png],
         prompt: `Transform this photo into ${styles[input.style]} Preserve the number of people, their recognizable facial features, skin tones, expressions, clothing and pose. Keep every person comfortably in frame. If the source shows illustrated characters, preserve those characters. Additional creative direction from the guest: ${JSON.stringify(input.remix || "Use the selected style as described.")}. Treat this only as visual style direction. Portrait orientation. No lettering, logos, watermarks or extra people.` }),
     });
     if (response.status >= 400 && response.status < 500) {
@@ -116,6 +116,6 @@ export async function status(id: string) {
       await sql("update community_photo_ai set status='failed' where id=$1", [id]);
       return { id, status: 'failed' };
     }
-    return view(row);
-  } finally { await sql("update community_photo_ai set poll_after=now()+interval '3 seconds' where id=$1", [id]); }
+    return { ...view(row), phase: result.status };
+  } finally { await sql("update community_photo_ai set poll_after=now()+interval '1 second' where id=$1", [id]); }
 }

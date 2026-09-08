@@ -2,7 +2,7 @@ const $ = (id) => document.getElementById(id);
 const video = $('video');
 const sample = $('sample');
 const keepsake = $('keepsake');
-const state = { mode: 'booth', aiImage: null, aiView: 'result', aiStyle: 'illustrated', aiWorking: false, aiTerminal: false, aiAttempt: null, aiEpoch: 0, aiAvailable: null, recognition: null, voiceTimer: null, stream: null, sample: false, ready: false, busy: false, requesting: false, cameraRequest: 0, photos: [], layout: 'strip', look: 'original', theme: 'cream', controller: null, lastSource: 'camera', capturedAt: null, sampleFrame: 0, facing: 'user' };
+const state = { mode: 'booth', editing: false, aiPhoto: 0, feedbackFrame: 0, feedbackPaused: false, aiStartedAt: null, aiImage: null, aiView: 'result', aiStyle: 'illustrated', aiWorking: false, aiTerminal: false, aiAttempt: null, aiEpoch: 0, aiAvailable: null, recognition: null, voiceTimer: null, stream: null, sample: false, ready: false, busy: false, requesting: false, cameraRequest: 0, photos: [], layout: 'strip', look: 'original', theme: 'cream', controller: null, lastSource: 'camera', capturedAt: null, sampleFrame: 0, facing: 'user' };
 const themes = { cream: { paper: '#faf9f5', ink: '#141413', label: 'Warm ivory' }, pink: { paper: '#e8b8a3', ink: '#4d2c20', label: 'Terracotta' }, green: { paper: '#d0d4bd', ink: '#333c2b', label: 'Soft olive' }, ink: { paper: '#262624', ink: '#faf9f5', label: 'Terminal dark' } };
 const filters = { original: 'none', mono: 'grayscale(1)', warm: 'sepia(.42) saturate(1.2)' };
 const prompts = ['A little smile', 'A little silly', 'All you'];
@@ -12,18 +12,35 @@ function setCameraLabel(text, on = false) {
   const dot = document.createElement('i'); dot.className = `status-dot${on ? ' on' : ''}`;
   $('camera-status').append(dot, document.createTextNode(text));
 }
-function requiredPhotos() { return state.mode === 'ai' ? 1 : 3; }
+function requiredPhotos() { return 3; }
 function canDeliver() { return state.photos.length === requiredPhotos() && !state.busy && (state.mode !== 'ai' || !!state.aiImage); }
-function captureHint() { return state.mode === 'ai' ? 'One photo. Three seconds to pose.' : 'Three photos. Three seconds to pose for each.'; }
+function captureHint() { return 'Three photos. Three seconds to pose for each.'; }
 function updateControls() {
   const complete = state.photos.length === requiredPhotos() && !state.busy;
   const ai = state.mode === 'ai';
   $('booth-page').dataset.mode = state.mode;
-  $('capture').textContent = ai ? 'Take one photo' : 'Take three photos';
-  $('camera-welcome').querySelector('h2').textContent = ai ? 'You, reimagined.' : 'Everybody in.';
-  $('camera-welcome').querySelector('p').textContent = ai ? 'One photo. A little imagination.' : 'Your camera. Your favourite faces.';
-  $('result-title').textContent = ai ? (state.aiImage ? 'A different kind of you.' : 'A little transformation.') : 'Make it yours.';
-  $('settings').hidden = ai;
+  $('capture').textContent = 'Take three photos';
+  $('camera-welcome').querySelector('h2').textContent = 'Everybody in.';
+  $('camera-welcome').querySelector('p').textContent = 'Three photos. A moment to keep.';
+  $('result-title').textContent = ai ? (state.aiImage ? 'You, reimagined.' : state.aiWorking ? 'A little magic is happening.' : 'Make it unexpected.') : 'A moment worth keeping.';
+  $('result-eyebrow').textContent = ai ? 'A LITTLE IMAGINATION' : 'THREE PHOTOS. ALL YOU.';
+  $('back-keepsake').hidden = !ai;
+  $('remix-invitation').hidden = ai;
+  $('open-remix').textContent = state.aiImage ? 'See your remix ✳' : state.aiWorking ? 'Remix in progress…' : state.aiAttempt ? 'Check your remix ✳' : 'Remix a photo ✳';
+  $('delivery-label').hidden = !canDeliver();
+  $('delivery-label').textContent = ai ? 'Send your remix' : 'Send your keepsake';
+  $('ai-photo-options').hidden = !!state.aiImage || !!state.aiAttempt;
+  $('ai-photo-options').disabled = state.aiWorking;
+  const waiting = ai && state.aiWorking;
+  $('waiting-preview').hidden = !waiting;
+  keepsake.hidden = waiting;
+  $('booth-page').dataset.waiting = String(waiting);
+  document.querySelectorAll('.journey span').forEach((el, index) => el.classList.toggle('current', index === ($('send-dialog').open ? 2 : complete ? 1 : 0)));
+  syncFeedback();
+  $('settings').hidden = ai || (complete && !state.editing);
+  $('edit-keepsake').hidden = ai;
+  $('edit-keepsake').textContent = state.editing ? 'Done customizing' : 'Customize frame';
+  $('reset').hidden = ai;
   $('ai-controls').hidden = !ai || !complete;
   document.querySelector('.result-actions').hidden = !canDeliver();
   $('ai-style-options').hidden = !!state.aiImage || !!state.aiAttempt;
@@ -31,7 +48,7 @@ function updateControls() {
   $('ai-remix-options').hidden = !!state.aiImage || !!state.aiAttempt;
   $('ai-remix').disabled = state.aiWorking;
   $('ai-consent-label').hidden = !!state.aiImage || !!state.aiAttempt;
-  $('ai-generate').hidden = !!state.aiImage || state.aiTerminal;
+  $('ai-generate').hidden = !!state.aiImage || state.aiTerminal || state.aiWorking;
   $('ai-generate').disabled = state.aiWorking || (!state.aiAttempt && (!$('ai-consent').checked || state.aiAvailable !== true));
   $('ai-compare').hidden = !state.aiImage;
   document.querySelectorAll('[data-mode]').forEach(button => { button.disabled = state.busy || state.requesting; });
@@ -210,7 +227,7 @@ async function captureSession() {
     say(error.name === 'AbortError' ? 'Session cancelled. Take your time, then try again.' : 'Capture interrupted. Check the camera and try again.', error.name !== 'AbortError');
   } finally { state.busy = false; state.controller = null; $('countdown').hidden = true; $('viewfinder-caption').textContent = 'GREAT THINGS START WITH A LITTLE CURIOSITY.'; updateControls();
     if (state.photos.length === requiredPhotos()) {
-      focusBooth(false); stopCamera(''); say(''); if (state.mode === 'ai') void checkAiAvailability(); $('result-title').focus({ preventScroll: true });
+      focusBooth(false); stopCamera(''); say(''); renderPhotoChoices(); void checkAiAvailability(); $('result-title').focus({ preventScroll: true });
     }
   }
 }
@@ -219,11 +236,12 @@ function selectChoice(group, selected) { document.querySelectorAll(group).forEac
 function resetSession() {
   if (state.busy) return;
   const source = state.lastSource;
-  clearAi();
+  clearAi(); state.mode = 'booth'; state.editing = false; state.aiPhoto = 0;
   deliveryPolling++; deliveryAttempt = null;
   $('send-dialog').close(); $('camera-dialog').close(); $('send-form').reset();
   $('send-status').textContent = ''; $('guest-note').value = ''; $('print-image').removeAttribute('src');
-  state.photos = []; state.capturedAt = null;
+  state.photos = []; state.capturedAt = null; renderPhotoChoices();
+  $('feedback-canvas').getContext('2d').clearRect(0, 0, 960, 720);
   updateTray(); renderKeepsake(); updateControls();
   if (source === 'sample') startSample(); else void startCamera();
 }
@@ -356,12 +374,12 @@ function openSend(channel) {
   input.maxLength = phone ? 25 : 254; input.removeAttribute('pattern'); input.setCustomValidity('');
   input.placeholder = phone ? '612 345 678' : 'you@example.com';
   keyboardShift = false; keyboardSymbols = false; renderRecipientKeyboard();
-  $('send-dialog').showModal(); input.focus({ preventScroll: true });
+  $('send-dialog').showModal(); updateControls(); input.focus({ preventScroll: true });
 }
 $('send-email').addEventListener('click', () => openSend('email'));
 $('send-whatsapp').addEventListener('click', () => openSend('whatsapp'));
 $('close-send').addEventListener('click', () => $('send-dialog').close());
-$('send-dialog').addEventListener('close', () => { deliveryPolling++; $('send-recipient').value = ''; });
+$('send-dialog').addEventListener('close', () => { deliveryPolling++; $('send-recipient').value = ''; updateControls(); });
 async function watchDelivery(id, generation) {
   for (let i = 0; i < 24 && generation === deliveryPolling && $('send-dialog').open; i++) {
     await new Promise(resolve => setTimeout(resolve, 5000));
@@ -412,11 +430,16 @@ $('send-form').addEventListener('submit', async event => {
 
 // Separate one-photo experience. A session token prevents old requests painting a new guest's screen.
 function renderPortrait() {
+  if (!state.aiImage || state.aiView === 'original') {
+    keepsake.width = 1280; keepsake.height = 960; keepsake.classList.add('postcard');
+    const original = state.photos[state.aiPhoto]; if (original) keepsake.getContext('2d').drawImage(original, 0, 0);
+    return;
+  }
   keepsake.width = 1200; keepsake.height = 1800; keepsake.classList.add('postcard');
   const ctx = keepsake.getContext('2d'); ctx.fillStyle = '#faf9f5'; ctx.fillRect(0, 0, 1200, 1800);
   ctx.fillStyle = '#262624'; ctx.textAlign = 'center';
   fitText(ctx, 'Community Photobooth ✳', 600, 75, 1080, 32);
-  const source = state.aiView === 'original' ? state.photos[0] : state.aiImage || state.photos[0];
+  const source = state.aiView === 'original' ? state.photos[state.aiPhoto] : state.aiImage || state.photos[state.aiPhoto];
   if (source) {
     const ratio = Math.min(1080 / source.width, 1440 / source.height);
     const w = source.width * ratio, h = source.height * ratio;
@@ -426,24 +449,34 @@ function renderPortrait() {
   ctx.font = '24px Georgia'; ctx.fillText('A little imagination. A memory to keep.', 600, 1720);
 }
 function clearAi() {
-  stopDictation(); $('ai-remix').value = '';
+  stopDictation(); stopFeedback(); state.aiStartedAt = null; $('ai-remix').value = '';
   state.aiEpoch++; state.aiTerminal = false; state.aiWorking = false; state.aiImage = null; state.aiAttempt = null; state.aiView = 'result';
-  $('ai-consent').checked = false; aiNotice(''); $('ai-generate').textContent = 'Create my portrait ✳';
+  $('ai-consent').checked = false; aiNotice(''); $('ai-generate').textContent = 'Create my remix ✳';
   selectChoice('[data-ai-view]', document.querySelector('[data-ai-view="result"]'));
 }
-document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => {
-  if (state.busy || state.requesting || state.mode === button.dataset.mode) return;
-  const hadCamera = state.ready || state.photos.length > 0;
-  if (state.ready) state.lastSource = state.sample ? 'sample' : 'camera';
-  stopCamera(''); clearAi(); state.mode = button.dataset.mode; state.photos = []; state.capturedAt = null;
-  $('guest-note').value = ''; $('print-image').removeAttribute('src');
-  deliveryPolling++; deliveryAttempt = null; $('send-dialog').close(); $('send-form').reset();
-  selectChoice('[data-mode]', button);
-  [video, sample].forEach(el => el.style.filter = state.mode === 'ai' ? 'none' : filters[state.look]);
-  updateTray(); renderKeepsake(); updateControls(); say(captureHint());
-  if (hadCamera) { if (state.lastSource === 'sample') startSample(); else void startCamera(); }
-  if (state.mode === 'ai') void checkAiAvailability();
-}));
+function setResultView(mode) {
+  if (state.photos.length !== 3 || state.busy) return;
+  stopDictation(); state.mode = mode; state.aiView = 'result';
+  selectChoice('[data-ai-view]', document.querySelector('[data-ai-view="result"]'));
+  renderKeepsake(); updateControls();
+  if (mode === 'ai' && !state.aiAttempt) void checkAiAvailability();
+}
+$('edit-keepsake').addEventListener('click', () => { state.editing = !state.editing; updateControls(); });
+$('open-remix').addEventListener('click', () => setResultView('ai'));
+$('back-keepsake').addEventListener('click', () => setResultView('booth'));
+function renderPhotoChoices() {
+  $('ai-photo-choices').replaceChildren(...state.photos.map((photo, index) => {
+    const button = document.createElement('button'); button.type = 'button'; button.dataset.photo = String(index);
+    button.setAttribute('aria-label', `Remix photo ${index + 1}`); button.setAttribute('aria-pressed', String(index === state.aiPhoto));
+    button.classList.toggle('selected', index === state.aiPhoto);
+    const image = new Image(); image.src = photo.toDataURL('image/jpeg', .7); image.alt = `Photo ${index + 1}`;
+    const label = document.createElement('span'); label.textContent = `0${index + 1}`; button.append(image, label); return button;
+  }));
+}
+$('ai-photo-choices').addEventListener('click', event => {
+  const button = event.target.closest('[data-photo]'); if (!button || state.aiAttempt || state.aiWorking) return;
+  state.aiPhoto = Number(button.dataset.photo); selectChoice('[data-photo]', button); renderKeepsake();
+});
 document.querySelectorAll('[data-ai-style]').forEach(button => button.addEventListener('click', () => {
   if (state.aiWorking || state.aiAttempt) return;
   state.aiStyle = button.dataset.aiStyle; selectChoice('[data-ai-style]', button);
@@ -460,8 +493,8 @@ async function checkAiAvailability() {
     const result = await response.json();
     if (epoch !== state.aiEpoch) return;
     state.aiAvailable = result.available === true;
-    if (!state.aiAttempt) $('ai-status').textContent = state.aiAvailable ? 'Pick a style, then make it yours. This can take a few minutes.' : 'The AI studio is unavailable right now. You can switch to Photobooth.';
-  } catch { if (epoch === state.aiEpoch) { state.aiAvailable = false; $('ai-status').textContent = 'The AI studio could not connect. Switch modes to try again.'; } }
+    if (!state.aiAttempt) $('ai-status').textContent = state.aiAvailable ? 'Choose one photo and a style. Recent remixes took around 30–75 seconds; some take longer.' : 'The AI studio is unavailable right now. Your original keepsake is ready to send.';
+  } catch { if (epoch === state.aiEpoch) { state.aiAvailable = false; $('ai-status').textContent = 'The AI studio could not connect. Go back to your keepsake and reopen Remix to try again.'; } }
   if (epoch === state.aiEpoch) updateControls();
 }
 function aiNotice(message, error = false) {
@@ -480,18 +513,20 @@ async function showAiStatus(result, epoch) {
     return true;
   }
   const messages = { failed: 'This portrait could not be created. Take another photo or switch to Photobooth.', uncertain: 'We could not confirm the creation request. We won’t submit it again automatically.', expired: 'This portrait session expired. Take another photo to begin again.' };
-  aiNotice(messages[result.status] || 'Creating your portrait… This may take a few minutes.', !!messages[result.status]);
+  $('generation-stage').textContent = result.phase === 'pending' ? 'Waiting for the portrait studio' : 'Creating your remix';
+  const elapsed = state.aiStartedAt ? Math.floor((Date.now() - state.aiStartedAt) / 1000) : 0;
+  aiNotice(messages[result.status] || (elapsed > 90 ? 'This one is taking longer. Your keepsake is ready if you’d like to send it while we wait.' : 'Your remix is on its way. You can return to your keepsake at any time.'), !!messages[result.status]);
   if (messages[result.status]) { state.aiTerminal = ['failed','expired'].includes(result.status); return true; }
   return false;
 }
 $('ai-generate').addEventListener('click', async () => {
-  if (state.aiWorking || state.mode !== 'ai' || state.photos.length !== 1) return;
+  if (state.aiWorking || state.mode !== 'ai' || state.photos.length !== 3) return;
   if (!state.aiAttempt && (!$('ai-consent').checked || !state.aiAvailable)) return;
   stopDictation();
   const epoch = state.aiEpoch;
   const fresh = !state.aiAttempt;
-  state.aiAttempt ||= { id: crypto.randomUUID(), style: state.aiStyle, remix: $('ai-remix').value.trim(), consent: true, png: state.photos[0].toDataURL('image/png').split(',')[1] };
-  const attempt = state.aiAttempt; state.aiWorking = true; updateControls();
+  state.aiAttempt ||= { id: crypto.randomUUID(), style: state.aiStyle, remix: $('ai-remix').value.trim(), consent: true, png: remixSource() };
+  const attempt = state.aiAttempt; state.aiStartedAt ||= Date.now(); state.aiWorking = true; updateControls();
   aiNotice(fresh ? 'Sending your photo to the portrait studio…' : 'Checking your portrait…');
   try {
     let response = await fetch(deliveryApi + (fresh ? 'ai-start' : 'ai-status?id=' + encodeURIComponent(attempt.id)), {
@@ -501,9 +536,9 @@ $('ai-generate').addEventListener('click', async () => {
     let result = await response.json();
     if (epoch !== state.aiEpoch) return;
     if (!response.ok) { if (fresh && [422,429,503].includes(response.status) && ['ai_limit','ai_not_configured','invalid_photo_delivery'].includes(result.code)) state.aiAttempt = null; throw new Error(result.error || 'The portrait studio is unavailable.'); }
-    for (let i = 0; i < 90 && epoch === state.aiEpoch; i++) {
+    for (let i = 0; i < 150 && epoch === state.aiEpoch; i++) {
       if (await showAiStatus(result, epoch)) return;
-      await new Promise(resolve => setTimeout(resolve, 4000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       if (epoch !== state.aiEpoch) return;
       response = await fetch(deliveryApi + 'ai-status?id=' + encodeURIComponent(attempt.id), { cache: 'no-store', signal: AbortSignal.timeout(35000) });
       result = await response.json();
@@ -511,7 +546,7 @@ $('ai-generate').addEventListener('click', async () => {
     }
     if (epoch === state.aiEpoch) aiNotice('Your portrait is taking longer than expected. Tap Check portrait status in a moment.');
   } catch (error) { if (epoch === state.aiEpoch) aiNotice(error.name === 'TimeoutError' || error instanceof TypeError ? 'Connection interrupted. Tap Check portrait status to continue without submitting again.' : error.message, true); }
-  finally { if (epoch === state.aiEpoch) { state.aiWorking = false; $('ai-generate').textContent = state.aiAttempt ? 'Check portrait status' : 'Create my portrait ✳'; updateControls(); } }
+  finally { if (epoch === state.aiEpoch) { state.aiWorking = false; $('ai-generate').textContent = state.aiAttempt ? 'Check portrait status' : 'Create my remix ✳'; updateControls(); } }
 });
 
 const assetBase = clientScript ? clientScript.src.replace(/app\.js.*$/, '') : new URL('assets/', location.href).href;
@@ -550,3 +585,29 @@ $('ai-dictate').addEventListener('click', () => {
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) stopDictation(); });
 window.addEventListener('pagehide', stopDictation);
+
+
+function remixSource() {
+  const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 768;
+  canvas.getContext('2d').drawImage(state.photos[state.aiPhoto], 0, 0, 1024, 768);
+  return canvas.toDataURL('image/png').split(',')[1];
+}
+function stopFeedback() { cancelAnimationFrame(state.feedbackFrame); state.feedbackFrame = 0; }
+function syncFeedback() {
+  const visible = state.aiWorking && state.mode === 'ai' && !document.hidden;
+  if (!visible) { stopFeedback(); return; }
+  if (!state.feedbackFrame) state.feedbackFrame = requestAnimationFrame(drawFeedback);
+}
+function drawFeedback(now) {
+  if (!state.aiWorking || state.mode !== 'ai' || document.hidden) { stopFeedback(); return; }
+  const canvas = $('feedback-canvas'), ctx = canvas.getContext('2d');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const index = state.feedbackPaused || reduced ? state.aiPhoto : Math.floor(now / 1800) % 3;
+  if (state.photos[index]) cover(ctx, state.photos[index], 0, 0, canvas.width, canvas.height);
+  const seconds = Math.max(0, Math.floor((Date.now() - state.aiStartedAt) / 1000));
+  $('generation-elapsed').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  $('generation-detail').textContent = seconds > 90 ? 'Taking longer than usual. Your original keepsake is ready to send.' : 'A replay of your photos while the portrait studio works.';
+  state.feedbackFrame = requestAnimationFrame(drawFeedback);
+}
+$('pause-feedback').addEventListener('click', () => { state.feedbackPaused = !state.feedbackPaused; $('pause-feedback').textContent = state.feedbackPaused ? 'Play replay' : 'Pause replay'; });
+document.addEventListener('visibilitychange', syncFeedback);

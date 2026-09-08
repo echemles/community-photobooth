@@ -4,14 +4,15 @@ A simple, tablet-friendly webcam photobooth for community gatherings.
 
 **[Try the live app](https://community-photobooth.hfs2s.app/)**
 
-## Two experiences
+## One capture, more possibilities
 
-- **Photobooth:** choose a layout, colour, photo effect and optional text, then take three timed photos. Create a strip or postcard.
-- **AI Portrait:** take one photo, choose Illustrated, Clay or Retro, and optionally describe your remix by voice or text. Review the description and consent before sending it to APIMart for image processing.
+Choose a layout, colour, photo effect and optional text, then take **three timed photos**. Your strip or postcard is immediately ready to email, send to WhatsApp or print.
 
-Email, WhatsApp and Print appear after the keepsake is ready. **Take another one** clears the guest's photos and details and resets the experience.
+Tap **Remix a photo** to choose a favourite from those three shots. Select Illustrated, Clay or Retro, optionally describe a twist by voice or text, then review consent before generating. There is no separate AI capture mode.
 
-Designed for iPad Air portrait and landscape, with a large camera preview, touch controls and full-screen delivery forms. WhatsApp defaults to Spain and includes a country dropdown and numeric keypad. Email has a custom keyboard.
+While AI works, a looping replay of your captured photos provides visual feedback alongside elapsed time and provider stage. Pause the replay at any time; reduced-motion preferences show a still image. You can return to the original keepsake, send it, and revisit your remix while generation continues. Reset clears photos, replay and recipient details.
+
+Designed for iPad Air portrait and landscape, with a large camera preview, progressive controls and full-screen delivery forms. WhatsApp defaults to Spain and includes a country dropdown and numeric keypad. Email has a custom keyboard.
 
 ## Run locally
 
@@ -69,3 +70,7 @@ The hosted app has been checked at iPad Air portrait and landscape viewport size
 ## Third-party assets
 
 Phone parsing uses libphonenumber-js 1.13.12; its MIT license is preserved in [`vendor/`](vendor/). The three style examples are fictional generated portraits; see [`assets/README.md`](assets/README.md) for prompts and provenance.
+
+### Generation latency
+
+The app sends only the selected photo, resized to 1024×768, and requests one 768×1024 portrait at APIMart's 1K tier (3:4). This halves output pixels compared with the previous 1024×1536 request. Completion checks run every two seconds instead of four. Provider queue time remains variable; elapsed time is real, and the replay is clearly labelled as the guest's photos rather than a partial AI result.

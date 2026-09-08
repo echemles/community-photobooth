@@ -14,7 +14,7 @@
 <body>
   <header class="header">
     <a class="brand" href="./" aria-label="Community Photobooth home"><span class="brand-mark" aria-hidden="true">✳</span><span>Community<span class="brand-caption">PHOTOBOOTH</span></span></a>
-    <div class="mode-switch" role="group" aria-label="Experience"><button data-mode="booth" aria-pressed="true" class="selected">Photobooth</button><button data-mode="ai" aria-pressed="false">AI Portrait ✳</button></div>
+    <div class="journey" aria-label="Your session"><span id="journey-capture" class="current">01 Capture</span><span id="journey-create">02 Make it yours</span><span id="journey-send">03 Take it home</span></div>
   </header>
 
   <main id="booth-page" data-step="camera">
@@ -41,18 +41,20 @@
         <div class="setting"><div class="setting-label">03 <span>The finishing touch</span></div><div class="theme-row"><div class="swatches" role="group" aria-label="Frame colour"><button class="swatch selected" data-theme="cream" aria-label="Cream frame" aria-pressed="true"></button><button class="swatch" data-theme="pink" aria-label="Terracotta frame" aria-pressed="false"></button><button class="swatch" data-theme="green" aria-label="Olive frame" aria-pressed="false"></button><button class="swatch" data-theme="ink" aria-label="Terminal dark frame" aria-pressed="false"></button></div><span id="theme-name">Warm ivory</span></div><label class="input-label" for="guest-note">Your text <span>(optional)</span></label><input class="text-input" id="guest-note" maxlength="70" placeholder="Wish you were here ♡"></div></fieldset></aside>
 
       <section id="result" class="result" hidden aria-labelledby="result-title">
-        <div class="paper-stage"><canvas id="keepsake" width="600" height="1800" aria-label="Your finished photo keepsake"></canvas></div>
-        <div class="result-options"><h1 id="result-title" tabindex="-1">Make it yours.</h1>
+        <div class="paper-stage"><div id="waiting-preview" hidden><canvas id="feedback-canvas" width="960" height="720" aria-label="Replay of your three captured photos"></canvas><div class="feedback-caption"><span>YOUR MOMENTS, ON REPEAT</span><button id="pause-feedback" class="text-button">Pause replay</button></div><div class="generation-indicator"><span class="activity-dot"></span><span id="generation-stage">Creating your remix</span><span id="generation-elapsed">0:00</span></div><p id="generation-detail">Your original photos are ready whenever you want them.</p></div><canvas id="keepsake" width="600" height="1800" aria-label="Your finished photo keepsake"></canvas></div>
+        <div class="result-options"><div class="result-nav"><button id="back-keepsake" class="text-button" hidden>← Your keepsake</button><span id="result-eyebrow">THREE PHOTOS. ALL YOU.</span></div><h1 id="result-title" tabindex="-1">Make it yours.</h1>
           
+          <button id="edit-keepsake" class="text-button">Customize frame</button><div id="remix-invitation"><p>Keep this moment. Or add a little imagination.</p><button id="open-remix" class="button coral">Remix a photo ✳</button></div>
           <div id="ai-controls" hidden>
+            <fieldset id="ai-photo-options"><legend>Pick your favourite</legend><div id="ai-photo-choices" role="group" aria-label="Photo to remix"></div></fieldset>
             <fieldset id="ai-style-options"><legend>Choose your style</legend><div class="ai-styles" role="group" aria-label="Portrait style"><button data-ai-style="illustrated" aria-pressed="true" class="selected"><img data-style-image="illustrated" alt="Illustrated portrait example">Illustrated</button><button data-ai-style="clay" aria-pressed="false"><img data-style-image="clay" alt="Clay portrait example">Clay</button><button data-ai-style="retro" aria-pressed="false"><img data-style-image="retro" alt="Retro portrait example">Retro</button></div></fieldset>
             <div id="ai-remix-options"><label class="input-label" for="ai-remix">Add your own twist <span>(optional)</span></label><textarea id="ai-remix" maxlength="500" rows="2" placeholder="Put me on the moon, surrounded by flowers…"></textarea><div class="voice-options"><button id="ai-dictate" class="text-button" type="button">Describe it aloud</button><select id="voice-language" aria-label="Dictation language"><option value="en-US">English</option><option value="es-ES">Español</option></select></div><p id="voice-status" role="status">Your browser transcribes your voice. Review the text before creating.</p></div>
             <label id="ai-consent-label" class="send-consent"><input id="ai-consent" type="checkbox"> I agree to send this photo to APIMart for AI processing and have permission from everyone pictured.</label>
-            <button id="ai-generate" class="button coral" disabled>Create my portrait ✳</button>
+            <button id="ai-generate" class="button coral" disabled>Create my remix ✳</button>
             <p id="ai-status" role="status" aria-live="polite"></p>
-            <div id="ai-compare" role="group" aria-label="Portrait preview" hidden><button data-ai-view="result" aria-pressed="true" class="selected">AI portrait</button><button data-ai-view="original" aria-pressed="false">Original</button></div>
+            <div id="ai-compare" role="group" aria-label="Portrait preview" hidden><button data-ai-view="result" aria-pressed="true" class="selected">Remix</button><button data-ai-view="original" aria-pressed="false">Original photo</button></div>
           </div>
-          <div class="result-actions"><button id="send-email" class="button secondary" disabled>Email</button><button id="send-whatsapp" class="button secondary" disabled>WhatsApp</button><button id="print" class="button secondary" disabled>Print</button></div>
+          <div id="delivery-label">Send your keepsake</div><div class="result-actions"><button id="send-email" class="button secondary" disabled>Email</button><button id="send-whatsapp" class="button secondary" disabled>WhatsApp</button><button id="print" class="button secondary" disabled>Print</button></div>
           <p id="result-status" role="status"></p><button id="reset" class="button coral">Take another one</button>
         </div>
       </section>
