@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f1e8">
+  <title>Community Photobooth — Make something worth keeping.</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./tablet.css">
+  <link rel="stylesheet" href="./brand.css">
+  <link rel="stylesheet" href="./ipad.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="header">
+    <a class="brand" href="./" aria-label="Community Photobooth home"><span class="brand-mark" aria-hidden="true">✳</span><span>Community<span class="brand-caption">PHOTOBOOTH</span></span></a>
+    <div class="mode-switch" role="group" aria-label="Experience"><button data-mode="booth" aria-pressed="true" class="selected">Photobooth</button><button data-mode="ai" aria-pressed="false">AI Portrait ✳</button></div>
+  </header>
+
+  <main id="booth-page" data-step="camera">
+    <div class="booth-layout">
+      <section class="camera-column" aria-label="Photobooth camera">
+        <div class="camera-topline"><span id="camera-status"><i class="status-dot"></i> CAMERA OFF</span><button id="open-camera-settings" class="text-button" hidden>Camera settings</button></div>
+        <div class="viewfinder" id="viewfinder">
+          <video id="video" autoplay muted playsinline hidden></video>
+          <canvas id="sample" width="1280" height="960" hidden aria-label="Animated sample scene"></canvas>
+          <div class="viewfinder-corners" aria-hidden="true"></div>
+          <div id="camera-welcome" class="camera-welcome"><div class="camera-illustration" aria-hidden="true"><svg viewBox="0 0 180 140" fill="none"><path d="M32 44L46 17L87 15L101 40" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 45Q78 38 157 45L164 121Q90 132 19 121Z" fill="#d97757" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M101 62C136 96 91 132 68 104C40 70 78 42 101 62Z" fill="#faf9f5" stroke="currentColor" stroke-width="5"/><path d="M78 70Q65 82 76 97M130 59L144 58" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M146 18L152 3M163 28L177 25M135 13L131 4" stroke="#d97757" stroke-width="4" stroke-linecap="round"/></svg></div><h2>Everybody in.</h2><p>Your camera. Your favourite faces.</p><button class="button cream" id="enable-camera">Enable camera <span>↗</span></button><button class="sample-link" id="try-sample">Try a sample</button></div>
+        <div class="shot-tray" id="shot-tray" hidden aria-label="Captured photos"><div class="shot-slot"><span>01</span> A little smile</div><div class="shot-slot"><span>02</span> A little silly</div><div class="shot-slot"><span>03</span> All you</div></div>
+          <span class="live-label" id="live-label" hidden>● LIVE · MIRRORED</span>
+          <div class="countdown" id="countdown" aria-live="assertive" hidden></div>
+          <div class="flash" id="flash"></div>
+          <p class="viewfinder-caption" id="viewfinder-caption">GREAT THINGS START WITH A LITTLE CURIOSITY.</p>
+        </div>
+        <div class="capture-bar"><button class="button coral" id="capture" hidden disabled>Take three photos</button><button class="button secondary" id="cancel" hidden>Cancel</button></div>
+        <p class="status-message" id="status-message" role="status">Three photos, with a moment to pose between each.</p>
+      </section>
+
+      <aside id="start-options" aria-labelledby="start-options-title"><h2 id="start-options-title">Make it yours.</h2><fieldset id="settings"><div class="setting"><div class="setting-label">01 <span>Pick your layout</span></div><div class="layout-options" role="group" aria-label="Photo layout"><button class="layout-choice selected" data-layout="strip" aria-pressed="true"><span class="layout-icon strip-icon"><i></i><i></i><i></i></span>Photo strip</button><button class="layout-choice" data-layout="postcard" aria-pressed="false"><span class="layout-icon postcard-icon"><i></i><i></i><i></i></span>Postcard</button></div></div>
+        <div class="setting"><div class="setting-label">02 <span>Set the mood</span></div><div class="looks" role="group" aria-label="Photo effect"><button class="look selected" data-look="original" aria-pressed="true"><span class="look-art original">✳</span>Original</button><button class="look" data-look="mono" aria-pressed="false"><span class="look-art mono">✳</span>Mono</button><button class="look" data-look="warm" aria-pressed="false"><span class="look-art warm">✳</span>Golden</button></div></div>
+        <div class="setting"><div class="setting-label">03 <span>The finishing touch</span></div><div class="theme-row"><div class="swatches" role="group" aria-label="Frame colour"><button class="swatch selected" data-theme="cream" aria-label="Cream frame" aria-pressed="true"></button><button class="swatch" data-theme="pink" aria-label="Terracotta frame" aria-pressed="false"></button><button class="swatch" data-theme="green" aria-label="Olive frame" aria-pressed="false"></button><button class="swatch" data-theme="ink" aria-label="Terminal dark frame" aria-pressed="false"></button></div><span id="theme-name">Warm ivory</span></div><label class="input-label" for="guest-note">Your text <span>(optional)</span></label><input class="text-input" id="guest-note" maxlength="70" placeholder="Wish you were here ♡"></div></fieldset></aside>
+
+      <section id="result" class="result" hidden aria-labelledby="result-title">
+        <div class="paper-stage"><canvas id="keepsake" width="600" height="1800" aria-label="Your finished photo keepsake"></canvas></div>
+        <div class="result-options"><h1 id="result-title" tabindex="-1">Make it yours.</h1>
+          
+          <div id="ai-controls" hidden>
+            <fieldset id="ai-style-options"><legend>Choose your style</legend><div class="ai-styles" role="group" aria-label="Portrait style"><button data-ai-style="illustrated" aria-pressed="true" class="selected"><img data-style-image="illustrated" alt="Illustrated portrait example">Illustrated</button><button data-ai-style="clay" aria-pressed="false"><img data-style-image="clay" alt="Clay portrait example">Clay</button><button data-ai-style="retro" aria-pressed="false"><img data-style-image="retro" alt="Retro portrait example">Retro</button></div></fieldset>
+            <div id="ai-remix-options"><label class="input-label" for="ai-remix">Add your own twist <span>(optional)</span></label><textarea id="ai-remix" maxlength="500" rows="2" placeholder="Put me on the moon, surrounded by flowers…"></textarea><div class="voice-options"><button id="ai-dictate" class="text-button" type="button">Describe it aloud</button><select id="voice-language" aria-label="Dictation language"><option value="en-US">English</option><option value="es-ES">Español</option></select></div><p id="voice-status" role="status">Your browser transcribes your voice. Review the text before creating.</p></div>
+            <label id="ai-consent-label" class="send-consent"><input id="ai-consent" type="checkbox"> I agree to send this photo to APIMart for AI processing and have permission from everyone pictured.</label>
+            <button id="ai-generate" class="button coral" disabled>Create my portrait ✳</button>
+            <p id="ai-status" role="status" aria-live="polite"></p>
+            <div id="ai-compare" role="group" aria-label="Portrait preview" hidden><button data-ai-view="result" aria-pressed="true" class="selected">AI portrait</button><button data-ai-view="original" aria-pressed="false">Original</button></div>
+          </div>
+          <div class="result-actions"><button id="send-email" class="button secondary" disabled>Email</button><button id="send-whatsapp" class="button secondary" disabled>WhatsApp</button><button id="print" class="button secondary" disabled>Print</button></div>
+          <p id="result-status" role="status"></p><button id="reset" class="button coral">Take another one</button>
+        </div>
+      </section>
+    </div>
+    <footer><span><i class="privacy-dot"></i> Your photos stay here until you choose to send or transform them.</span></footer>
+  </main>
+  <dialog id="camera-dialog" aria-labelledby="camera-settings-title"><div class="dialog-heading"><h2 id="camera-settings-title">Your camera</h2><button id="close-camera-settings" class="text-button" aria-label="Close camera settings">✕</button></div><div class="camera-options"><label class="sr-only" for="camera-select">Camera</label><select id="camera-select" disabled><option>Your camera</option></select><button id="flip-camera" class="text-button" hidden>↻ Flip camera</button><label class="mirror-toggle"><input id="mirror" type="checkbox" checked> Mirror</label><button id="stop-camera" class="text-button" hidden>Camera off</button></div><button id="fullscreen" class="text-button">⛶ Fullscreen</button></dialog>
+
+  <dialog id="send-dialog" aria-labelledby="send-title">
+    <form id="send-form">
+      <div class="send-heading"><h2 id="send-title">Take your memory home.</h2><button type="button" id="close-send" class="text-button" aria-label="Close send form">✕</button></div>
+      <div class="send-layout">
+        <div class="send-details">
+          <p id="send-intro">We'll send your finished photo as an attachment.</p>
+          <div id="country-field" hidden><label class="input-label" for="phone-country">Country</label><select id="phone-country" autocomplete="country-name"><option value="ES" selected>Spain (+34)</option></select></div>
+          <label class="input-label" for="send-recipient" id="recipient-label">Email address</label>
+          <input class="text-input" id="send-recipient" type="text" inputmode="none" autocomplete="email" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="send" required maxlength="254" aria-describedby="recipient-hint">
+          <p id="recipient-hint">Use the keyboard below, type, or paste.</p>
+          <label class="send-consent"><input id="send-consent" type="checkbox" required> Send this photo to me. I have permission to share it.</label>
+          <p class="send-privacy">Only this keepsake and your address are shared for delivery. Temporary copies expire within two hours.</p>
+          <p id="send-status" role="status" aria-live="polite"></p>
+          <button id="send-submit" class="button coral" type="submit">Send my photo ↗</button>
+        </div>
+        <div id="recipient-keyboard" class="recipient-keyboard" role="group" aria-label="Email keyboard"></div>
+      </div>
+    </form>
+  </dialog>
+  <div id="print-sheet"><img id="print-image" alt="Your photobooth keepsake"></div>
+</body>
+</html>

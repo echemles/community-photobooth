@@ -1,0 +1,14 @@
+{
+  "name": "community-photobooth",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A tablet-friendly webcam photobooth with one-photo AI remixes.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check app.js && node --check server.mjs && node --check publish-workspace.mjs"
+  }
+}

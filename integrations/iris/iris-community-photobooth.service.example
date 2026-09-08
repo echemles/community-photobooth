@@ -1,0 +1,15 @@
+[Unit]
+Description=Community Photobooth delivery through Iris
+After=network-online.target iris.service
+Wants=network-online.target
+[Service]
+Type=simple
+WorkingDirectory=%h/iris
+ExecStart=/usr/bin/node %h/iris/src/community-photobooth.js
+Restart=always
+RestartSec=5
+UMask=0077
+StandardOutput=journal
+StandardError=journal
+[Install]
+WantedBy=default.target

@@ -1,0 +1,94 @@
+/* Community Photobooth: warm paper, terracotta, editorial serif and terminal details. */
+:root { color: #141413; background: #faf9f5; --ink: #141413; --cream: #faf9f5; --coral: #d97757; --line: #e1dfd7; --muted: #73716a; }
+.brand { color: #141413; font-weight: normal; letter-spacing: -1px; }
+.brand-mark { color: #d97757; background: transparent; font-family: Georgia, serif; font-size: 56px; border-radius: 0; width: 43px; }
+.code-word { font-family: 'Courier New', monospace; font-size: .76em; letter-spacing: -.8px; }
+.brand-caption, .eyebrow, .camera-topline, .preview-heading, .section-heading > span, .setting-label, .live-label, .viewfinder-caption { font-family: 'Courier New', monospace; }
+.brand-caption { color: #77756e; font-size: 9px; }
+h1 em { color: #b65336; }
+.eyebrow { color: #8d5745; }
+.nav-button.active { background: #eee9df; }
+.tiny-star { color: #d97757; }
+.viewfinder { background: #282825; }
+.camera-illustration, .camera-illustration:before, .lens { border-color: #d5b9a5; }
+.lens { color: #d97757; }
+.camera-illustration > span { background: #d97757; }
+.camera-welcome p { color: #d2ccc0; }
+.coral { color: #21150f; background: #d97757; }
+.coral:hover:not(:disabled) { background: #e58a6b; }
+.shot-slot { background: #f0ece3; border-color: #d9d3c8; color: #827b6e; }
+.layout-choice.selected { background: #f4e6dd; border-color: #c47353; }
+.layout-icon { border-color: #bc9c88; }
+.layout-icon i { background: #bd9f8e; }
+.look-art.original { background: #cba88f; color: #faf2df; }
+.look.selected .look-art { outline-color: #bc6748; }
+.swatch[data-theme=cream] { background-color: #f0ebde; }
+.swatch[data-theme=pink] { background-color: #d97757; }
+.swatch[data-theme=green] { background-color: #c5cbb2; }
+.swatch[data-theme=ink] { background-color: #262624; }
+.swatch.selected { border-color: #a05c42; }
+.text-input { background: #fffefb; color: #38352f; }
+.text-input::placeholder { color: #827d72; }
+.setting-label > span, .input-label { color: #665f54; }
+.theme-row, .preview-heading, .save-book, .status-message { color: #746b5e; }
+.handwritten { color: #a06a50; }
+.book-card { background: #f0ece3; border-color: #e0d6ca; }
+.book-card p { color: #75685a; }
+.empty-book { color: #a3654b; }
+.privacy-dot, .status-dot.on { background: #a47752; }
+.mirror-toggle input { accent-color: #b76547; }
+.secondary:hover:not(:disabled) { background: #f0e8dd; }
+@media (max-width: 720px) {
+  .brand { font-size: 22px; }
+  .brand-mark { font-size: 43px; width: 32px; }
+  .brand-caption { font-size: 7px; }
+  .header { gap: 8px; }
+  .nav-button { padding-inline: 7px; }
+}
+
+/* Community reference: quiet ivory, large black serif, simple black actions,
+   and an original hand-drawn camera with a terracotta accent. */
+.brand { font-size: 27px; }
+.header { padding-block: 22px; }
+.nav-button.active { background: #141413; color: #faf9f5; border-radius: 7px; }
+.nav-button.active #book-count { border-color: #73716a; }
+.eyebrow { color: #73716a; font-family: Arial, sans-serif; letter-spacing: 1.4px; }
+h1 { font-size: clamp(46px, 5.4vw, 76px); line-height: 1.04; letter-spacing: -2.9px; }
+h1 em { color: #141413; font-style: normal; }
+.intro { padding-top: 39px; }
+.intro-note { color: #65635c; font-size: 14px; }
+.coral, .cream { background: #141413; color: #faf9f5; border-radius: 7px; }
+.coral:hover:not(:disabled), .cream:hover:not(:disabled) { background: #393833; }
+.shutter-icon { border-color: #aaa79e; background: transparent; }
+.viewfinder { border-radius: 8px; }
+.viewfinder:has(.camera-welcome:not([hidden])) { background: #efede6; color: #141413; }
+.viewfinder:has(.camera-welcome:not([hidden])):after { box-shadow: none; }
+.viewfinder:has(.camera-welcome:not([hidden])) .viewfinder-caption { color: #7d7668; }
+.camera-welcome p { color: #65635c; font-size: 13px; }
+.sample-link { color: #65635c; }
+.camera-illustration { border: 0; width: 126px; height: 98px; transform: rotate(-6deg); color: #141413; }
+.camera-illustration:before { display: none; }
+.camera-illustration svg { width: 100%; height: 100%; overflow: visible; }
+.camera-welcome h2 { margin-top: 21px; }
+.section-heading h2 { color: #141413; }
+.layout-choice.selected { background: #efede6; border-color: #34332e; }
+.layout-icon { border-color: #888378; }
+.layout-icon i { background: #aaa497; }
+.look.selected .look-art { outline-color: #34332e; }
+.swatch.selected { border-color: #34332e; }
+.paper-stage { background: #f1eee6; }
+.handwritten { color: #918778; }
+.book-card { background: #efede6; }
+.status-message.error { color: #a03927; }
+@media (min-width: 721px) and (max-width: 1000px) {
+  h1 { font-size: 62px; }
+  .intro-note { max-width: 250px; font-size: 13px; }
+}
+@media (max-width: 720px) {
+  .brand { font-size: 22px; }
+  h1 { font-size: 49px; letter-spacing: -2px; }
+  .intro { padding-top: 28px; }
+  .camera-illustration { width: 86px; height: 65px; margin-top: 0; }
+  .camera-welcome h2 { margin-top: 5px; }
+  .camera-welcome p { font-size: 11px; }
+}

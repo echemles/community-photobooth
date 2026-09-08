@@ -1,0 +1,91 @@
+/* Touch-first controls. Keep these rules last, after the original visual styles. */
+button, a, select, input { touch-action: manipulation; }
+.nav-button, .text-button, .sample-link, select, .mirror-toggle { min-height: 44px; }
+.camera-topline { height: 48px; align-items: center; }
+.text-button { display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; }
+.camera-options { flex-wrap: wrap; gap: 4px 10px; }
+.mirror-toggle { padding: 0 8px; }
+.mirror-toggle input { width: 18px; height: 18px; margin-right: 5px; }
+.camera-controls { padding: 5px 0; }
+select { max-width: 190px; padding: 0 8px; }
+.sample-link { margin-top: 8px; padding: 8px; }
+.swatches { gap: 4px; }
+.swatch { width: 44px; height: 44px; background-clip: content-box; padding: 10px; border: 1px solid transparent; }
+.swatch[data-theme] { background-clip: content-box; }
+.swatch.selected { outline: none; border-color: #63744d; }
+.output-actions .button { min-height: 46px; font-size: 12px; }
+.share-button { width: 100%; margin-top: 10px; }
+.save-book { margin-top: 7px; }
+.handwritten { pointer-events: none; }
+.camera-welcome .button { min-height: 48px; }
+.camera-welcome .sample-link { flex-shrink: 0; }
+@media (pointer: coarse) {
+  .text-input, select { font-size: 16px; }
+  .text-input { min-height: 48px; }
+  .input-label, .setting-label > span, .look, .layout-choice { font-size: 13px; }
+  .look { min-height: 76px; }
+  .layout-choice { min-height: 60px; }
+  .camera-options, .text-button { font-size: 12px; }
+  .status-message { font-size: 13px; }
+}
+@media (min-width: 721px) and (max-width: 1000px) {
+  .header { padding: 20px 30px; }
+  main { padding: 0 30px; }
+  .intro { padding: 30px 0 24px; }
+  h1 { font-size: 54px; }
+  .intro-note { max-width: 205px; font-size: 12px; }
+  .booth-layout { grid-template-columns: 1fr; gap: 30px; }
+  .camera-welcome h2 { font-size: 40px; }
+  .camera-welcome p { font-size: 14px; }
+  .camera-illustration { transform: rotate(-8deg); }
+  .viewfinder { aspect-ratio: 4 / 3; }
+  .shot-slot { aspect-ratio: 4 / 2; }
+  .customize { border-left: none; border-top: 1px solid var(--line); padding: 25px 0 0; display: grid; grid-template-columns: 1fr 1fr; column-gap: 35px; }
+  .section-heading { grid-column: 1 / -1; }
+  .keepsake-area { border-top: none; padding-top: 0; }
+  .paper-stage { min-height: 345px; }
+  #keepsake { height: 290px; }
+  #keepsake.postcard { height: 260px; }
+  .handwritten { right: 0; bottom: 20px; }
+  .capture-note { display: block; font-size: 12px; }
+}
+@media (min-width: 1001px) and (max-width: 1366px) and (pointer: coarse) {
+  .header { padding: 18px 28px; }
+  main { padding: 0 28px; }
+  .intro { padding: 25px 0 22px; }
+  h1 { font-size: 50px; }
+  .booth-layout { grid-template-columns: minmax(0, 1fr) 300px; gap: 25px; }
+  .customize { padding-left: 22px; }
+  .capture-note { display: none; }
+  .camera-options { gap: 0 5px; }
+}
+@media (max-width: 720px) {
+  .header { flex-wrap: wrap; padding-top: max(15px, env(safe-area-inset-top)); }
+  .header nav { margin-left: auto; }
+  .camera-welcome h2 { font-size: 27px; }
+  .camera-welcome p { margin: 7px 0 10px; }
+  .camera-welcome .sample-link { margin-top: 2px; min-height: 36px; }
+  .camera-illustration { margin-top: -6px; }
+  .theme-row { justify-content: flex-start; gap: 18px; }
+  .text-input, select { font-size: 16px; }
+  .text-input { min-height: 48px; }
+  .camera-controls { align-items: flex-start; }
+  .camera-options { gap: 0 5px; }
+  .camera-options select { max-width: 165px; }
+  .text-button, .mirror-toggle { font-size: 11px; }
+  .status-message { font-size: 12px; }
+}
+@media (pointer: coarse) {
+  .capture-bar { padding: 5px 0; }
+  .capture-bar > #capture { min-height: 56px; font-size: 14px; }
+  footer { padding-bottom: max(25px, env(safe-area-inset-bottom)); }
+}
+/* iPad browsers without the document Fullscreen API get a camera-focused view. */
+.is-focused .header, .is-focused .intro, .is-focused .customize, .is-focused footer { display: none; }
+.is-focused main { max-width: 1000px; padding: max(12px, env(safe-area-inset-top)) 20px 16px; }
+.is-focused .booth-layout { display: block; }
+.is-focused .camera-column { max-width: min(100%, calc((100dvh - 260px) * 4 / 3)); min-width: min(100%, 300px); margin: auto; }
+.is-focused .shot-slot { aspect-ratio: 4 / 1.3; }
+.is-focused .camera-controls { padding: 0; }
+.is-focused .capture-bar { margin-top: 5px; }
+@media (prefers-reduced-motion: reduce) { .flash { display: none; } }
