@@ -29,8 +29,6 @@ function updateControls() {
   $('remix-label').textContent = state.aiImage ? 'See your remix' : state.aiWorking ? 'Remix in progress…' : state.aiAttempt ? 'Check your remix' : 'Remix all three';
   $('delivery-label').hidden = !canDeliver();
   $('delivery-label').textContent = ai ? 'Send your remix' : 'Send your keepsake';
-  $('ai-photo-options').hidden = !!state.aiImage || !!state.aiAttempt;
-  $('ai-photo-options').disabled = state.aiWorking;
   const waiting = ai && state.aiWorking;
   $('waiting-preview').hidden = !waiting;
   $('keepsake-preview').hidden = waiting;
@@ -252,7 +250,7 @@ async function captureSession() {
     say(error.name === 'AbortError' ? 'Session cancelled. Take your time, then try again.' : 'Capture interrupted. Check the camera and try again.', error.name !== 'AbortError');
   } finally { state.busy = false; state.controller = null; $('countdown').hidden = true; $('viewfinder-caption').textContent = 'GREAT THINGS START WITH A LITTLE CURIOSITY.'; updateControls();
     if (state.photos.length === requiredPhotos()) {
-      focusBooth(false); stopCamera(''); say(''); renderPhotoChoices(); void checkAiAvailability(); $('result-title').focus({ preventScroll: true });
+      focusBooth(false); stopCamera(''); say(''); void checkAiAvailability(); $('result-title').focus({ preventScroll: true });
     }
   }
 }
@@ -265,7 +263,7 @@ function resetSession() {
   deliveryPolling++; deliveryAttempt = null;
   $('send-dialog').close(); $('camera-dialog').close(); $('send-form').reset();
   $('send-status').textContent = ''; $('guest-note').value = ''; $('print-image').removeAttribute('src');
-  state.photos = []; state.capturedAt = null; renderPhotoChoices();
+  state.photos = []; state.capturedAt = null;
   $('feedback-canvas').getContext('2d').clearRect(0, 0, 960, 720);
   updateTray(); renderKeepsake(); updateControls();
   if (source === 'sample') startSample(); else void startCamera();
@@ -469,13 +467,6 @@ function setResultView(mode) {
 }
 $('open-remix').addEventListener('click', () => setResultView('ai'));
 $('back-keepsake').addEventListener('click', () => setResultView('booth'));
-function renderPhotoChoices() {
-  $('ai-photo-choices').replaceChildren(...state.photos.map((photo, index) => {
-    const panel = document.createElement('div'); panel.className = 'remix-source';
-    const image = new Image(); image.src = photo.toDataURL('image/jpeg', .7); image.alt = `Included photo ${index + 1}`;
-    const label = document.createElement('span'); label.textContent = `0${index + 1}`; panel.append(image, label); return panel;
-  }));
-}
 document.querySelectorAll('[data-ai-style]').forEach(button => button.addEventListener('click', () => {
   if (state.aiWorking || state.aiAttempt) return;
   state.aiStyle = button.dataset.aiStyle; selectChoice('[data-ai-style]', button);
@@ -562,7 +553,7 @@ $('ai-dictate').addEventListener('click', () => {
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!Recognition) { $('voice-status').textContent = 'Voice input is unavailable in this browser. Type your idea above, or use your keyboard’s microphone.'; $('ai-remix').focus(); return; }
   const recognition = new Recognition(), epoch = state.aiEpoch;
-  recognition.lang = $('voice-language').value; recognition.interimResults = true; recognition.continuous = false;
+  recognition.lang = navigator.language || 'en-US'; recognition.interimResults = true; recognition.continuous = false;
   const prefix = $('ai-remix').value.trim(); state.recognition = recognition;
   recognition.onresult = event => {
     if (epoch !== state.aiEpoch || state.recognition !== recognition) return;
